@@ -1,0 +1,7 @@
+{
+  "body": {
+    "dryRun": false
+  },
+  "path": "/reset",
+  "httpMethod": "POST"
+}

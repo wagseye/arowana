@@ -1,0 +1,56 @@
+#!/bin/bash
+
+CREATE_TEST=1 # default to creating a test
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -f|--force)
+      FORCE_MODE=1
+      shift # past argument
+      ;;
+    -t|--test)
+      CREATE_TEST=1
+      shift # past argument
+      ;;
+    -T|--no-test)
+      SKIP_TEST=1
+      shift # past argument
+      ;;
+    -*|--*)
+      echo "Unknown option $i"
+      exit 1
+      ;;
+    *)
+      if [[ -n "$NEW_MIGRATION_TEXT" ]]; then
+        echo "Too many parameters. Exiting"
+        exit 1
+      fi
+      NEW_MIGRATION_TEXT=$1
+      shift # past argument
+      ;;
+  esac
+done
+
+NEW_MIGRATION_TEXT=`echo $NEW_MIGRATION_TEXT | sed -E 's/[^a-zA-Z0-9]+/-/g'`
+
+MIGRATION_NAME="${MIGRATION_NAME:=`date +%Y%m%d%H%M%S`}"
+if [[ -n $NEW_MIGRATION_TEXT ]]; then
+    MIGRATION_NAME=${MIGRATION_NAME}-${NEW_MIGRATION_TEXT}
+fi
+
+MIGRATIONS_DIR="${MIGRATIONS_DIR:=./migrations}"
+TEMPLATE_DIR="${TEMPLATE_DIR:=./templates}"
+MIGRATION_TEMPLATE_NAME="${MIGRATION_TEMPLATE_NAME:=new_migration.js}"
+TEST_TEMPLATE_NAME="${TEST_TEMPLATE_NAME:=new_test.js}"
+
+NEW_MIGRATION_DIR=${MIGRATIONS_DIR}/${MIGRATION_NAME}
+mkdir -p ${NEW_MIGRATION_DIR}
+sed -e 's/__MIGRATION_NAME__/'$MIGRATION_NAME'/g' ${TEMPLATE_DIR}/${MIGRATION_TEMPLATE_NAME} > ${MIGRATIONS_DIR}/${MIGRATION_NAME}.js
+echo "Created new migration ${MIGRATION_NAME}"
+touch ${NEW_MIGRATION_DIR}/up.sql
+touch ${NEW_MIGRATION_DIR}/down.sql
+if [[ -z $SKIP_TEST ]]; then
+    if [[ -n $CREATE_TEST ]]; then
+      mkdir -p ${NEW_MIGRATION_DIR}/tests
+      cp ${TEMPLATE_DIR}/${TEST_TEMPLATE_NAME} ${NEW_MIGRATION_DIR}/tests/test.mjs
+    fi
+fi

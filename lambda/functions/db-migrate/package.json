@@ -1,0 +1,15 @@
+{
+  "name": "db-migrate",
+  "version": "1.0.0",
+  "exports": "./dist/index.js",
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.623.0",
+    "db-migrate": "^0.11.14",
+    "db-migrate-pg": "^1.5.2",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.1.0"
+  }
+}

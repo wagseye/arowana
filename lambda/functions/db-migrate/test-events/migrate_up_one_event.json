@@ -1,0 +1,9 @@
+{
+  "body": {
+    "direction": "up",
+    "count": 1,
+    "dryRun": false
+  },
+  "path": "/migrate",
+  "httpMethod": "POST"
+}

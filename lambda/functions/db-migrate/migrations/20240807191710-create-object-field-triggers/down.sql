@@ -1,0 +1,11 @@
+DROP TRIGGER update_column_from_field_record_change ON object_fields;
+DROP FUNCTION update_column_from_field_record_change;
+
+DROP TRIGGER populate_unset_reference_field_id on object_fields;
+DROP FUNCTION populate_unset_reference_field_id;
+
+DROP TRIGGER create_column_from_new_field_record ON object_fields;
+DROP FUNCTION create_column_from_new_field_record;
+
+DROP TRIGGER create_table_from_new_object_record ON objects;
+DROP FUNCTION create_table_from_new_object_record;
