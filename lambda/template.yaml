@@ -1,0 +1,220 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  data-layer-test
+
+  A lambda function used to test the Data lambda layer to ensure it is working correctly
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 30
+    Tracing: Active
+  Api:
+    TracingEnabled: true
+
+Resources:
+  # Lambda Layers
+  DataLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: DataLayer
+      Description: DataLayer
+      ContentUri: layers/data
+      CompatibleRuntimes:
+        - nodejs20.x
+      RetentionPolicy: Retain
+    Metadata: # Manage esbuild properties
+      BuildMethod: makefile
+
+  # DataLayerOld:
+  #   Type: AWS::Serverless::LayerVersion
+  #   Properties:
+  #     LayerName: DataLayerOld
+  #     Description: DataLayerOld
+  #     ContentUri: layers/data-old
+  #     CompatibleRuntimes:
+  #       - nodejs20.x
+  #     RetentionPolicy: Retain
+  #   Metadata: # Manage esbuild properties
+  #     BuildMethod: makefile
+
+  DatabaseDirectLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: DatabaseDirectLayer
+      Description: DatabaseDirectLayer
+      ContentUri: layers/database-direct
+      CompatibleRuntimes:
+        - nodejs20.x
+      RetentionPolicy: Retain
+    Metadata: # Manage esbuild properties
+      BuildMethod: makefile
+
+  TestingLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: TestingLayer
+      Description: TestingLayer
+      ContentUri: layers/testing
+      CompatibleRuntimes:
+        - nodejs20.x
+      RetentionPolicy: Retain
+    Metadata: # Manage esbuild properties
+      BuildMethod: makefile
+
+  TemplatingLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: TemplatingLayer
+      Description: TemplatingLayer
+      ContentUri: layers/templating
+      CompatibleRuntimes:
+        - nodejs20.x
+      RetentionPolicy: Retain
+    Metadata: # Manage esbuild properties
+      BuildMethod: makefile
+
+  # Lambda Functions
+  DbMigrate:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: DbMigrate
+      CodeUri: functions/db-migrate
+      Handler: index.handler
+      Layers:
+        - !Ref TestingLayer
+        - !Ref DatabaseDirectLayer
+      Runtime: nodejs20.x
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          NODE_OPTIONS: "--enable-source-maps"
+          DB_SECRET_NAME: database_credentials_dev
+          DB_SECRET_DATABASE_NAME: bringup-test
+    Metadata: # Manage esbuild properties
+      BuildMethod: makefile
+
+  CodeGeneration:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: CodeGeneration
+      CodeUri: functions/code-generation
+      Handler: index.handler
+      Layers:
+        - !Ref TemplatingLayer
+      Runtime: nodejs20.x
+      Architectures:
+        - x86_64
+      # Events:
+      #   Test:
+      #     Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+      #     Properties:
+      #       Path: /hello
+      #       Method: get
+      Environment:
+        Variables:
+          NODE_OPTIONS: "--enable-source-maps"
+    Metadata: # Manage esbuild properties
+      BuildMethod: makefile
+
+  DataLayerTest:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: DataLayerTest
+      CodeUri: functions/data-layer-test
+      Handler: index.handler
+      Layers:
+        - !Ref DataLayer
+        - !Ref DatabaseDirectLayer
+      Runtime: nodejs20.x
+      Architectures:
+        - x86_64
+      # Events:
+      #   Test:
+      #     Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+      #     Properties:
+      #       Path: /hello
+      #       Method: get
+      Environment:
+        Variables:
+          NODE_OPTIONS: "--enable-source-maps"
+          DB_SECRET_NAME: database_credentials_dev
+    Metadata: # Manage esbuild properties
+      BuildMethod: makefile
+
+  # DataLayerTestOld:
+  #   Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  #   Properties:
+  #     FunctionName: DataLayerTestOld
+  #     CodeUri: functions/data-layer-test-old
+  #     Handler: index.handler
+  #     Layers:
+  #       - !Ref DataLayerOld
+  #       - !Ref DatabaseDirectLayer
+  #     Runtime: nodejs20.x
+  #     Architectures:
+  #       - x86_64
+  #     # Events:
+  #     #   Test:
+  #     #     Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+  #     #     Properties:
+  #     #       Path: /hello
+  #     #       Method: get
+  #     Environment:
+  #       Variables:
+  #         NODE_OPTIONS: "--enable-source-maps"
+  #         DB_SECRET_NAME: database_credentials_dev
+  #   Metadata: # Manage esbuild properties
+  #     BuildMethod: makefile
+
+  TestDatabaseTriggers:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: TestDatabaseTriggers
+      CodeUri: functions/test-database-triggers
+      Handler: index.handler
+      Layers:
+        - !Ref DataLayer
+        - !Ref DatabaseDirectLayer
+        - !Ref TestingLayer
+      Runtime: nodejs20.x
+      Architectures:
+        - x86_64
+      # Events:
+      #   Test:
+      #     Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+      #     Properties:
+      #       Path: /hello
+      #       Method: get
+      Environment:
+        Variables:
+          NODE_OPTIONS: "--enable-source-maps"
+          DB_SECRET_NAME: database_credentials_dev
+    Metadata: # Manage esbuild properties
+      BuildMethod: makefile
+
+  TestHtmlRender:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: TestHtmlRender
+      CodeUri: functions/html-render-test
+      Handler: index.handler
+      Runtime: nodejs20.x
+      Layers:
+        - !Ref TemplatingLayer
+      Architectures:
+        - x86_64
+      # Events:
+      #   Test:
+      #     Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+      #     Properties:
+      #       Path: /hello
+      #       Method: get
+      Environment:
+        Variables:
+          NODE_OPTIONS: "--enable-source-maps"
+          DB_SECRET_NAME: database_credentials_dev
+    Metadata: # Manage esbuild properties
+      BuildMethod: makefile
