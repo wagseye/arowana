@@ -89,6 +89,13 @@ BEGIN
         END IF;
     END IF;
 
+    -- Postgres field names will always be converted to lower case. To ensure our unique constraint on the name field will work,
+    -- we need to ensure the value in the "name" field is lower case
+    IF lower(NEW.name) != NEW.name THEN
+        RAISE EXCEPTION 'The field name must be lower case';
+    END IF;
+
+
     RETURN NEW;
 END;
 $function$;

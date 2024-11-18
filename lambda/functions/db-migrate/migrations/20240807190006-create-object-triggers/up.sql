@@ -19,6 +19,7 @@ CREATE TRIGGER create_prefix_sequence_for_new_org
     FOR EACH ROW
     EXECUTE FUNCTION create_prefix_sequence_for_new_org();
 
+
 CREATE FUNCTION public.create_sequence_from_new_object()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -76,7 +77,7 @@ CREATE FUNCTION public.populate_new_record_id()
 AS $function$
 DECLARE
     obj_prefix text;
-    org_key   text;
+    org_key    text;
     next_uid   bigint;
     uid        bigint;
 BEGIN
@@ -86,14 +87,16 @@ END;
 $function$;
 
 
-CREATE OR REPLACE FUNCTION public.populate_object_prefix()
+CREATE OR REPLACE FUNCTION public.populate_object_fields()
  RETURNS trigger
  LANGUAGE plpgsql
 AS $function$
 DECLARE
-    org_key    text;
+    org_key     text;
+    org_schema  text;
     next_prefix bigint;
 BEGIN
+    -- First auto-populate the object prefix (if not set)
     IF NEW.prefix IS NULL OR NEW.prefix='' THEN
         SELECT id_key INTO org_key FROM organizations WHERE id=NEW.organization_id;
         UPDATE object_sequences _new SET next=(MOD(_new.next + _new.increment, _new.max))
@@ -108,33 +111,27 @@ BEGIN
         NEW.prefix := base36_encode(next_prefix, const_id_obj_prefix_len());
     END IF;
 
-    RETURN NEW;
-END;
-$function$;
-
-CREATE TRIGGER populate_object_prefix
-    BEFORE INSERT ON objects
-    FOR EACH ROW
-    EXECUTE FUNCTION populate_object_prefix();
-
-
-CREATE OR REPLACE FUNCTION public.populate_object_shema()
- RETURNS trigger
- LANGUAGE plpgsql
-AS $function$
-DECLARE
-    org_schema    text;
-BEGIN
+    -- Copy the table schema name from the organization if it has not been set
     IF NEW.table_schema IS NULL OR NEW.table_schema='' THEN
         SELECT table_schema INTO org_schema FROM organizations WHERE id=NEW.organization_id;
         NEW.table_schema := org_schema;
+    END IF;
+
+    -- Finally, populate (if not set) and validate the table name
+    IF NEW.table_name IS NULL OR NEW.table_name='' THEN
+        NEW.table_name := LOWER(NEW.label_plural);
+    END IF;
+    -- Postgres table names will always be converted to lower case. To ensure our unique constraint on the table_name field will work,
+    -- we need to ensure the value in the "table_name" field is lower case
+    IF lower(NEW.table_name) != NEW.table_name THEN
+        RAISE EXCEPTION 'The table name must be lower case';
     END IF;
 
     RETURN NEW;
 END;
 $function$;
 
-CREATE TRIGGER populate_object_shema
+CREATE TRIGGER populate_object_fields
     BEFORE INSERT ON objects
     FOR EACH ROW
-    EXECUTE FUNCTION populate_object_shema();
+    EXECUTE FUNCTION populate_object_fields();

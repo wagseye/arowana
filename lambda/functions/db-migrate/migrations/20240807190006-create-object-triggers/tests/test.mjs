@@ -151,4 +151,26 @@ export default class TestObjectSequenceTriggers {
       );
     }, "Function generate_new_record_id did not throw the expected error");
   }
+
+  static async testTableName() {
+    let res = await Database.query(
+      "SELECT id, id_key FROM organizations WHERE name='admin'"
+    );
+    Test.assertEquals(1, res.length); // sanity check
+    const org_id = res[0].id;
+
+    // If we don't specify a table_name it should use LOWER(label_plural)
+    const objs =
+      await Database.query(`INSERT INTO objects (id, organization_id, name, label, label_plural, table_schema, prefix) VALUES
+    ('id2', '${org_id}', 'obj2', '-', 'MyTestObjects', 'public', 'zzz') RETURNING table_name`);
+    Test.assertEquals(1, objs.length);
+    Test.assertEquals("mytestobjects", objs[0].table_name);
+
+    // Specifying a non-lowercase table name should throw an error
+    // This will spoil our transaction so this statement should be performed last
+    Test.assertError(async () => {
+      await Database.query(`INSERT INTO objects (id, organization_id, name, label, label_plural, table_schema, table_name, prefix) VALUES
+        ('test_id', '${org_id}', 'obj2', '-', '-', 'public', 'MyTestObject', 'zzz')`);
+    });
+  }
 }

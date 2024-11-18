@@ -143,7 +143,7 @@ export default class TestCreateObjectFieldTriggers {
 
     await Database.query(
       `INSERT INTO object_fields (object_id, name, label, type, reference_object_id, reference_field_id) VALUES
-      ('${OBJ_A_ID}', 'refToB', '-', 'reference', '${OBJ_B_ID}', '${OBJ_B_FLD_ID}')`
+      ('${OBJ_A_ID}', 'ref_to_b', '-', 'reference', '${OBJ_B_ID}', '${OBJ_B_FLD_ID}')`
     );
 
     // Ensure the reference field was created on object A
@@ -177,13 +177,13 @@ export default class TestCreateObjectFieldTriggers {
     );
     const B_OBJ_ID = res[0].id;
     res = await Database.query(
-      `INSERT INTO test_object_a (refToB) VALUES ('${B_OBJ_ID}') returning id`
+      `INSERT INTO test_object_a (ref_to_b) VALUES ('${B_OBJ_ID}') returning id`
     );
     const A_OBJ_ID = res[0].id;
 
     // Finally, do a join to ensure everything seems to be working...
     res = await Database.query(
-      `SELECT a.id AS a_id, b.id AS b_id FROM test_object_a a FULL OUTER JOIN test_object_b b ON a.refToB=b.id`
+      `SELECT a.id AS a_id, b.id AS b_id FROM test_object_a a FULL OUTER JOIN test_object_b b ON a.ref_to_b=b.id`
     );
     Test.assertEquals(1, res.length);
     Test.assertEquals(A_OBJ_ID, res[0].a_id);
@@ -321,7 +321,7 @@ export default class TestCreateObjectFieldTriggers {
     Test.assertIsSet(usr.id);
 
     const objs = await Database.query(
-      `INSERT INTO objects (organization_id, name, label, label_plural, table_name) VALUES('${org.id}', 'testObj', 'testObj', 'testObjs', 'testObjs') RETURNING id, prefix, table_schema, created_at, deleted_at`
+      `INSERT INTO objects (organization_id, name, label, label_plural, table_name) VALUES('${org.id}', 'testObj', 'testObj', 'testObjs', 'test_objs') RETURNING id, prefix, table_schema, created_at, deleted_at`
     );
     Test.assertEquals(1, objs.length);
     const obj = objs[0];
@@ -353,13 +353,13 @@ export default class TestCreateObjectFieldTriggers {
 
     await Database.query(
       `INSERT INTO object_fields (object_id, name, label, type) VALUES
-      ('${obj.id}', 'newField', '-', 'text')`
+      ('${obj.id}', 'new_field', '-', 'text')`
     );
 
     // Note that the table_name is in lower case here. This is required because that is how it is stored in Postgres
     let cols = await Database.query(
       `SELECT column_name, data_type FROM INFORMATION_SCHEMA.COLUMNS
-      WHERE table_schema='${org.table_schema}' AND table_name='testobjs';`
+      WHERE table_schema='${org.table_schema}' AND table_name='test_objs';`
     );
 
     Test.assertEquals(2, cols.length);
@@ -368,7 +368,7 @@ export default class TestCreateObjectFieldTriggers {
       return newMap;
     }, {});
     Test.assertIsNotNull(colsByName["id"]);
-    let col = colsByName["newfield"];
+    let col = colsByName["new_field"];
     Test.assertIsNotNull(col);
     Test.assertEquals("text", col.data_type);
   }
