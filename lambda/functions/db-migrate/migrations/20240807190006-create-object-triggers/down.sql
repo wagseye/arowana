@@ -1,8 +1,5 @@
-DROP TRIGGER populate_object_shema ON objects;
-DROP FUNCTION populate_object_shema;
-
-DROP TRIGGER populate_object_prefix ON objects;
-DROP FUNCTION populate_object_prefix;
+DROP TRIGGER populate_object_fields ON objects;
+DROP FUNCTION populate_object_fields;
 
 DROP FUNCTION populate_new_record_id CASCADE;
 DROP FUNCTION generate_new_record_id;
