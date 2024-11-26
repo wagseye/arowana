@@ -1,0 +1,4 @@
+APP_NAME=data-access
+EC2_NAME=data-access-ec2
+DOCKER_USER=wagseye00
+TARGET_PLATFORM=linux/amd64

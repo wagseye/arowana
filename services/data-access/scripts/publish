@@ -1,0 +1,8 @@
+#!/bin/bash
+
+set -e # exit on any errors
+
+source configuration.txt
+
+docker tag $APP_NAME $DOCKER_USER/$APP_NAME
+docker push $DOCKER_USER/$APP_NAME

@@ -1,0 +1,4 @@
+docker pull wagseye00/data-access
+docker stop data-access
+docker rm data-access
+docker run --name=data-access -d -p 3000:3000 wagseye00/data-access

@@ -1,0 +1,30 @@
+#!/bin/bash
+
+set -e # exit on any errors
+
+if [ -z ${AWS_KEY+x} ]; then
+  echo "The AWS_KEY variable must be set to deploy";
+  exit 1;
+fi
+
+if [ ! -f ${AWS_KEY} ]; then
+    echo "The file specified by AWS_KEY does not exist"
+    exit 1;
+fi
+
+# The file redirect on the last (ssh) line does not resolve the path correctly, so we use a little magic here to get the directory
+# that contains the script files
+SCRIPTS_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+source ${SCRIPTS_DIR}/configuration.txt
+
+docker tag $APP_NAME $DOCKER_USER/$APP_NAME
+
+docker push $DOCKER_USER/$APP_NAME
+
+# Get the public IP using the EC2 instance name
+EC2_IP=`AWS_PAGER="" aws ec2 describe-instances --filters "Name=tag:Name,Values=$EC2_NAME" --output json | awk '/PublicIpAddress/{gsub("[\",]","",$0);print $2}'`
+
+echo "Restarting EC2 instance at ${EC2_IP}"
+
+ssh -i ${AWS_KEY} ec2-user@${EC2_IP} -o StrictHostKeyChecking=accept-new 'bash -s' < ${SCRIPTS_DIR}/ec2_deploy_commands.txt

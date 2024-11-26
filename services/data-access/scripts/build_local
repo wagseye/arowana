@@ -1,0 +1,10 @@
+#!/bin/bash
+
+source configuration.txt
+
+
+SCRIPTS_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+${SCRIPTS_DIR}/build_container
+
+docker run --platform $TARGET_PLATFORM -p 3000:3000 ${APP_NAME}
