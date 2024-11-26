@@ -1,0 +1,7 @@
+#!/bin/bash
+
+SCRIPTS_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+${SCRIPTS_DIR}/build_container
+${SCRIPTS_DIR}/publish
+${SCRIPTS_DIR}/deploy

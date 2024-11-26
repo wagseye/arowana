@@ -1,0 +1,5 @@
+#!/bin/bash
+
+source configuration.txt
+
+docker build --platform $TARGET_PLATFORM . -t $APP_NAME
