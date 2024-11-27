@@ -2,3 +2,6 @@ APP_NAME=data-access
 EC2_NAME=data-access-ec2
 DOCKER_USER=wagseye00
 TARGET_PLATFORM=linux/amd64
+get_ec2_public_ip() {
+    AWS_PAGER="" aws ec2 describe-instances --filters "Name=tag:Name,Values=$EC2_NAME" --output json | awk '/PublicIpAddress/{gsub("[\",]","",$0);print $2}'
+}
