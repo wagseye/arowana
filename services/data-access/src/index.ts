@@ -2,16 +2,17 @@ import express from "express";
 const app = express();
 const port = 3000;
 
-import Settings, { SettingType } from "./settings";
+import DatabaseConnector from "./database";
 
 app.get("/status", async (req, res) => {
+  res.send({ status: "Express server is running" });
+});
+
+app.get("/select", async (req, res) => {
   console.log(`Received request at ${Date.now()}`);
 
   try {
-    let dbCreds: object = await Settings.getObjectValue(
-      SettingType.DatabaseCredentials
-    );
-    console.log(`Retrieved secret, host=${dbCreds["host"]}`);
+    DatabaseConnector.runSql("SELECT * FROM users");
   } catch (err) {
     if (err instanceof Error) {
       console.log(`Caught error: ${err.message}\n${err.stack}`);
