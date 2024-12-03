@@ -12,11 +12,7 @@ if [ ! -f ${AWS_KEY} ]; then
     exit 1;
 fi
 
-# The file redirect on the last (ssh) line does not resolve the path correctly, so we use a little magic here to get the directory
-# that contains the script files
-SCRIPTS_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-
-source ${SCRIPTS_DIR}/configuration.txt
+source configuration.txt
 
 EC2_IP=`get_ec2_public_ip`
 
