@@ -2,4 +2,7 @@
 
 source configuration.txt
 
+# clean up any older unused images to keep them from taking up space
+docker image prune -f
+
 docker build --platform $TARGET_PLATFORM . -t $APP_NAME

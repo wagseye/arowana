@@ -1,0 +1,7 @@
+# Ignore everything by default
+*
+
+# Whitelist of file/folders to include
+!src/
+!package.json
+!tsconfig.json
