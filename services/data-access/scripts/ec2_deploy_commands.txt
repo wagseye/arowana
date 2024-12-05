@@ -1,3 +1,4 @@
 docker pull wagseye00/data-access
 docker stop data-access 2> /dev/null
+sleep 1
 docker run --rm --name=data-access -d -v ~/secrets:/secrets -p 3000:3000 wagseye00/data-access

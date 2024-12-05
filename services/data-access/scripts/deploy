@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e # exit on any errors
+trap "echo; exit" INT
 
 if [ -z ${AWS_KEY+x} ]; then
   echo "The AWS_KEY variable must be set to deploy";
