@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e # exit on any errors
+trap "echo; exit" INT
 source configuration.txt
 
 # clean up any older unused images to keep them from taking up space
