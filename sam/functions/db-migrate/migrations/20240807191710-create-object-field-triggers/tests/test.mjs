@@ -3,41 +3,41 @@ import { Test } from "testing";
 
 export default class TestCreateObjectFieldTriggers {
   static async testNewTableForNewObjects() {
-    let res = await Database.query(
+    let res = await Database.runSql(
       `SELECT count(*) as count FROM PG_CATALOG.PG_TABLES`
     );
     const existingTables = parseInt(res[0].count);
 
-    res = await Database.query(
+    res = await Database.runSql(
       "SELECT id, id_key FROM organizations WHERE name='admin'"
     );
     Test.assertEquals(1, res.length); // sanity check
     const ORG_ID = res[0].id;
 
-    await Database.query(
+    await Database.runSql(
       `INSERT INTO objects (id, organization_id, name, label, label_plural, table_schema, table_name, prefix) VALUES
       ('id1', '${ORG_ID}', 'obj1', '-', '-', 'public', 'object1', 'a00'),
       ('id2', '${ORG_ID}', 'obj2', '-', '-', 'public', 'object2', 'a11')`
     );
 
-    res = await Database.query(
+    res = await Database.runSql(
       `SELECT id FROM objects where table_schema='public' AND table_name IN ('object1', 'object2')`
     );
     const objIds = res.map((x) => x.id);
     Test.assertEquals(2, objIds.length);
 
-    res = await Database.query(
+    res = await Database.runSql(
       `SELECT count(*) as count FROM PG_CATALOG.PG_TABLES`
     );
     Test.assertEquals(existingTables + 2, parseInt(res[0].count));
 
-    res = await Database.query(
+    res = await Database.runSql(
       `SELECT count(*) as count FROM PG_CATALOG.PG_TABLES WHERE schemaname='public' AND tablename IN ('object1', 'object2')`
     );
     Test.assertEquals(2, parseInt(res[0].count));
 
     // Make sure object_fields records were created for ids for the new tables
-    res = await Database.query(
+    res = await Database.runSql(
       `SELECT name, type FROM object_fields WHERE object_id IN ('${objIds[0]}', '${objIds[1]}')`
     );
     Test.assertEquals(2, res.length);
@@ -47,7 +47,7 @@ export default class TestCreateObjectFieldTriggers {
     Test.assertEquals("text", res[1].type);
 
     // Make sure id columns were generated on the new tables
-    res = await Database.query(
+    res = await Database.runSql(
       `SELECT table_name, column_name, data_type FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema='public' AND table_name IN ('object1', 'object2') ORDER BY table_name`
     );
     Test.assertEquals(2, res.length);
@@ -59,26 +59,26 @@ export default class TestCreateObjectFieldTriggers {
     Test.assertEquals("text", res[1].data_type);
 
     // Make sure no actual records were created in the new table
-    res = await Database.query(`SELECT count(*) as count FROM public.object1`);
+    res = await Database.runSql(`SELECT count(*) as count FROM public.object1`);
     Test.assertEquals(0, parseInt(res[0].count));
 
-    res = await Database.query(`SELECT count(*) as count FROM public.object2`);
+    res = await Database.runSql(`SELECT count(*) as count FROM public.object2`);
     Test.assertEquals(0, parseInt(res[0].count));
   }
 
   static async testCreateColumnFromObjectFieldRecord() {
-    let res = await Database.query(
+    let res = await Database.runSql(
       "SELECT id, id_key FROM organizations WHERE name='admin'"
     );
     Test.assertEquals(1, res.length); // sanity check
     const ORG_ID = res[0].id;
 
-    res = await Database.query(
+    res = await Database.runSql(
       `SELECT table_schema, table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema='public' AND table_name='my_test_object'`
     );
     Test.assertEquals(0, res.length);
 
-    res = await Database.query(
+    res = await Database.runSql(
       `INSERT INTO objects (organization_id, name, label, label_plural, table_schema, table_name, prefix) VALUES
       ('${ORG_ID}', 'my_test_object', '-', '-', 'public', 'my_test_object', 'zzz')
       RETURNING id`
@@ -86,32 +86,32 @@ export default class TestCreateObjectFieldTriggers {
     Test.assertEquals(1, res.length);
     const OBJ_ID = res[0].id;
 
-    res = await Database.query(
+    res = await Database.runSql(
       `SELECT table_schema, table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema='public' AND table_name='my_test_object'`
     );
     Test.assertEquals(1, res.length);
 
     // Ensure we only have the id field so far
-    res = await Database.query(
+    res = await Database.runSql(
       `SELECT name, type FROM object_fields WHERE object_id='${OBJ_ID}'`
     );
     Test.assertEquals(1, res.length);
     Test.assertEquals("id", res[0].name);
 
     // Ensure the table only has 1 column (id)
-    res = await Database.query(
+    res = await Database.runSql(
       `SELECT column_name, data_type FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema='public' AND table_name='my_test_object'`
     );
     Test.assertEquals(1, res.length);
     Test.assertEquals("id", res[0].column_name);
 
-    await Database.query(
+    await Database.runSql(
       `INSERT INTO object_fields (object_id, name, label, type) VALUES
       ('${OBJ_ID}', 'num', '-', 'integer')`
     );
 
     // Check that the column now exists on our test table
-    res = await Database.query(
+    res = await Database.runSql(
       `SELECT column_name, data_type FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema='public' AND table_name='my_test_object' AND column_name!='id'`
     );
     Test.assertEquals(1, res.length);
@@ -120,13 +120,13 @@ export default class TestCreateObjectFieldTriggers {
   }
 
   static async testCreateReferenceColumnFromObjectFieldRecord() {
-    let res = await Database.query(
+    let res = await Database.runSql(
       "SELECT id, id_key FROM organizations WHERE name='admin'"
     );
     Test.assertEquals(1, res.length); // sanity check
     const ORG_ID = res[0].id;
 
-    res = await Database.query(
+    res = await Database.runSql(
       `INSERT INTO objects (organization_id, name, label, label_plural, table_schema, table_name, prefix) VALUES
       ('${ORG_ID}', 'test_object_a', '-', '-', 'public', 'test_object_a', 'zzy'),
       ('${ORG_ID}', 'test_object_b', '-', '-', 'public', 'test_object_b', 'zzz')
@@ -135,25 +135,25 @@ export default class TestCreateObjectFieldTriggers {
     const OBJ_A_ID = res[0].id;
     const OBJ_B_ID = res[1].id;
 
-    res = await Database.query(
+    res = await Database.runSql(
       `SELECT id FROM object_fields where object_id='${OBJ_B_ID}'`
     );
     Test.assertEquals(1, res.length);
     const OBJ_B_FLD_ID = res[0].id;
 
-    await Database.query(
+    await Database.runSql(
       `INSERT INTO object_fields (object_id, name, label, type, reference_object_id, reference_field_id) VALUES
       ('${OBJ_A_ID}', 'ref_to_b', '-', 'reference', '${OBJ_B_ID}', '${OBJ_B_FLD_ID}')`
     );
 
     // Ensure the reference field was created on object A
-    res = await Database.query(
+    res = await Database.runSql(
       `SELECT column_name, data_type FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema='public' AND table_name='test_object_a'`
     );
     Test.assertEquals(2, res.length);
 
     // Ensure the object B doens't have any new fields
-    res = await Database.query(
+    res = await Database.runSql(
       `SELECT column_name, data_type FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema='public' AND table_name='test_object_b'`
     );
     Test.assertEquals(1, res.length);
@@ -161,7 +161,7 @@ export default class TestCreateObjectFieldTriggers {
     // NB: I wanted to test the foreign key constraint by attempting to insert an invalid record, but this causes the Postgres
     // transaction to enter into a failed state and all subsequent commands fail. Instead I query the constraints table to
     // verify the fk constraint has been created
-    res = await Database.query(
+    res = await Database.runSql(
       `select pgc.conname as name, pg_get_constraintdef(pgc.oid) as constraint
          from pg_constraint pgc
          join pg_namespace nsp on nsp.oid = pgc.connamespace
@@ -172,17 +172,17 @@ export default class TestCreateObjectFieldTriggers {
     );
     Test.assertEquals(1, res.length);
 
-    res = await Database.query(
+    res = await Database.runSql(
       `INSERT INTO test_object_b (id) VALUES(NULL) RETURNING id`
     );
     const B_OBJ_ID = res[0].id;
-    res = await Database.query(
+    res = await Database.runSql(
       `INSERT INTO test_object_a (ref_to_b) VALUES ('${B_OBJ_ID}') returning id`
     );
     const A_OBJ_ID = res[0].id;
 
     // Finally, do a join to ensure everything seems to be working...
-    res = await Database.query(
+    res = await Database.runSql(
       `SELECT a.id AS a_id, b.id AS b_id FROM test_object_a a FULL OUTER JOIN test_object_b b ON a.ref_to_b=b.id`
     );
     Test.assertEquals(1, res.length);
@@ -197,7 +197,7 @@ export default class TestCreateObjectFieldTriggers {
 
   // Make sure we have all of the manually created records that we expect
   static async testExistingRecords() {
-    const orgs = await Database.query(
+    const orgs = await Database.runSql(
       "SELECT * FROM organizations WHERE name='admin'"
     );
     Test.assertEquals(1, orgs.length);
@@ -207,13 +207,13 @@ export default class TestCreateObjectFieldTriggers {
     Test.assertIsSet(org.created_at);
     Test.assertIsUnset(org.deleted_at);
 
-    const users = await Database.query(
+    const users = await Database.runSql(
       `SELECT * FROM users WHERE organization_id='${org.id}' AND username='admin'`
     );
     Test.assertEquals(1, users.length);
     Test.assertIsUnset(users[0].deactivated_at);
 
-    const objs = await Database.query(
+    const objs = await Database.runSql(
       `SELECT * FROM objects WHERE organization_id='${org.id}'`
     );
     Test.assertEquals(4, objs.length);
@@ -246,7 +246,7 @@ export default class TestCreateObjectFieldTriggers {
     Test.assertIsSet(usrPrefix);
     Test.assert(usrObj.is_admin);
 
-    const seqs = await Database.query(
+    const seqs = await Database.runSql(
       `SELECT * FROM object_sequences WHERE organization_key='${org.id_key}'`
     );
     Test.assertEquals(5, seqs.length);
@@ -274,7 +274,7 @@ export default class TestCreateObjectFieldTriggers {
     Test.assertEquivalent(2222222033, seq.increment);
     Test.assertEquivalent(78364164096, seq.max);
 
-    const allFlds = await Database.query(
+    const allFlds = await Database.runSql(
       `SELECT flds.* FROM object_fields flds JOIN objects objs ON flds.object_id=objs.id WHERE objs.organization_id='${org.id}'`
     );
     console.log(`object id: ${objObj.id}`);
@@ -298,7 +298,7 @@ export default class TestCreateObjectFieldTriggers {
   // Make sure as we create new records, all of the trigger automation (populating fields, creating related records)
   // is working correctlyu
   static async testNewRecords() {
-    let orgs = await Database.query(
+    let orgs = await Database.runSql(
       "INSERT INTO organizations (name) VALUES('test_org') RETURNING id, id_key, table_schema"
     );
     Test.assertEquals(1, orgs.length);
@@ -307,20 +307,20 @@ export default class TestCreateObjectFieldTriggers {
     Test.assertIsSet(org.id_key);
     Test.assertIsSet(org.table_schema);
 
-    let seqs = await Database.query(
+    let seqs = await Database.runSql(
       `SELECT * FROM object_sequences WHERE organization_key='${org.id_key}'`
     );
     Test.assertEquals(1, seqs.length);
     Test.assertIsUnset(seqs[0].object_prefix);
 
-    let users = await Database.query(
+    let users = await Database.runSql(
       `INSERT INTO users (username, organization_id) VALUES('test_user', '${org.id}') RETURNING id`
     );
     Test.assertEquals(1, users.length);
     const usr = users[0];
     Test.assertIsSet(usr.id);
 
-    const objs = await Database.query(
+    const objs = await Database.runSql(
       `INSERT INTO objects (organization_id, name, label, label_plural, table_name) VALUES('${org.id}', 'testObj', 'testObj', 'testObjs', 'test_objs') RETURNING id, prefix, table_schema, created_at, deleted_at`
     );
     Test.assertEquals(1, objs.length);
@@ -331,7 +331,7 @@ export default class TestCreateObjectFieldTriggers {
     Test.assertIsSet(obj.created_at);
     Test.assertIsUnset(obj.deleted_at);
 
-    seqs = await Database.query(
+    seqs = await Database.runSql(
       `SELECT * FROM object_sequences WHERE organization_key='${org.id_key}'`
     );
     Test.assertEquals(2, seqs.length);
@@ -344,20 +344,20 @@ export default class TestCreateObjectFieldTriggers {
     let seq = seqsByPrefix[obj.prefix];
     Test.assertIsNotNull(seq);
 
-    const flds = await Database.query(
+    const flds = await Database.runSql(
       `SELECT * FROM object_fields WHERE object_id='${obj.id}'`
     );
     Test.assertEquals(1, flds.length);
     const fld = flds[0];
     Test.assertEquals("id", fld.name);
 
-    await Database.query(
+    await Database.runSql(
       `INSERT INTO object_fields (object_id, name, label, type) VALUES
       ('${obj.id}', 'new_field', '-', 'text')`
     );
 
     // Note that the table_name is in lower case here. This is required because that is how it is stored in Postgres
-    let cols = await Database.query(
+    let cols = await Database.runSql(
       `SELECT column_name, data_type FROM INFORMATION_SCHEMA.COLUMNS
       WHERE table_schema='${org.table_schema}' AND table_name='test_objs';`
     );

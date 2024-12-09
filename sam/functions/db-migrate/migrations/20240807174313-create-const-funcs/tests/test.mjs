@@ -39,7 +39,7 @@ export default class TestMigration {
   }
 
   static async querySingleValue(q) {
-    const res = await Database.query(q);
+    const res = await Database.runSql(q);
     if (res && res.length) {
       if (res.length > 1) {
         throw new Error(

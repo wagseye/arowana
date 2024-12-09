@@ -3,7 +3,7 @@ import { Test } from "testing";
 
 export default class TestOrganizations {
   static async testDefaultOrg() {
-    const rows = await Database.query(
+    const rows = await Database.runSql(
       "SELECT id, name, id_key, table_schema FROM organizations WHERE name='admin'"
     );
     Test.assertEquals(1, rows.length);
