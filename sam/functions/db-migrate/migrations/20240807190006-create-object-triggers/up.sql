@@ -48,8 +48,10 @@ CREATE FUNCTION public.generate_new_record_id(tbl_schema name, tbl_name name)
 AS $function$
 DECLARE
     obj_prefix text;
-    org_key   text;
-    next_uid   bigint;
+    org_key    text;
+    uid_next   bigint;
+    uid_incr   bigint;
+    uid_max    bigint;
 BEGIN
     SELECT obj.prefix, org.id_key INTO obj_prefix, org_key
         FROM objects obj
@@ -58,16 +60,15 @@ BEGIN
     IF count(obj_prefix) = 0
         THEN RAISE EXCEPTION 'Did not find object/organization corresponding to %.%', tbl_schema, tbl_name;
     END IF;
-    UPDATE object_sequences _new SET next=MOD(_new.next + _new.increment, _new.max)
-        FROM object_sequences _old
-        WHERE _new.organization_key=_old.organization_key
-          AND _new.object_prefix=_old.object_prefix
-          AND _new.organization_key=org_key AND _new.object_prefix=obj_prefix
-        RETURNING _old.next INTO next_uid;
+
+    SELECT next, increment, max INTO uid_next, uid_incr, uid_max FROM object_sequences
+        WHERE organization_key=org_key AND object_prefix=obj_prefix FOR UPDATE;
+    UPDATE object_sequences _new SET next=MOD(uid_next + uid_incr, uid_max)
+        WHERE organization_key=org_key AND object_prefix=obj_prefix;
     return CONCAT(obj_prefix,
                   base36_encode(const_id_api_version(), const_id_api_version_len()),
                   org_key,
-                  base36_encode(next_uid, const_id_uid_len()));
+                  base36_encode(uid_next, const_id_uid_len()));
 END;
 $function$;
 
