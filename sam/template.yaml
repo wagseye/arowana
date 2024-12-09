@@ -92,7 +92,6 @@ Resources:
         Variables:
           NODE_OPTIONS: "--enable-source-maps"
           DB_SECRET_NAME: database_credentials_dev
-          DB_SECRET_DATABASE_NAME: bringup-test
     Metadata: # Manage esbuild properties
       BuildMethod: makefile
 
