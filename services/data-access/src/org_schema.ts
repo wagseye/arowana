@@ -7,6 +7,7 @@ export default class OrganizationSchema {
   >();
 
   #orgnizationId: string;
+  #id_key: string;
   #mapTables: Map<string, SchemaTable>;
 
   public static async getOrganizationSchema(
@@ -21,19 +22,23 @@ export default class OrganizationSchema {
     return schema;
   }
 
-  public constructor(orgId: string) {
+  public constructor(orgId: string, idKey: string) {
     if (!orgId) throw new Error("No organization id provided");
     this.#orgnizationId = orgId;
+    this.#id_key = idKey;
     this.#mapTables = new Map<string, SchemaTable>();
   }
   public get organizationId() {
     return this.#orgnizationId;
   }
+  public get idKey() {
+    return this.#id_key;
+  }
 
-  public addTable(name: string): SchemaTable {
+  public addTable(name: string, namespace): SchemaTable {
     if (this.hasTable(name))
       throw new Error(`Organization already has table named "${name}"`);
-    const tbl: SchemaTable = new SchemaTable(name);
+    const tbl: SchemaTable = new SchemaTable(name, namespace);
     this.#mapTables.set(name, tbl);
     return tbl;
   }
@@ -53,17 +58,19 @@ export default class OrganizationSchema {
   ): Promise<OrganizationSchema | undefined> {
     if (!orgId) throw new Error("No organization id provided");
 
-    const dbData = await DatabaseConnector.runSql(
-      "SELECT obj.table_name AS tablename, obj.table_schema as tableschema, fld.name AS fldname, fld.type AS fldtype FROM objects obj LEFT OUTER JOIN object_fields fld ON obj.id=fld.object_id WHERE obj.organization_id=$1",
+    const dbData = await DatabaseConnector.query(
+      `SELECT org.id_key AS org_key, obj.table_name AS tablename, obj.table_schema as tableschema, fld.name AS fldname, fld.type AS fldtype
+      FROM organizations org LEFT OUTER JOIN objects obj ON org.id=obj.organization_id LEFT OUTER JOIN object_fields fld ON obj.id=fld.object_id
+      WHERE obj.organization_id=$1`,
       orgId
     );
 
     if (dbData && dbData.length) {
-      const orgSchema = new OrganizationSchema(orgId);
+      const orgSchema = new OrganizationSchema(orgId, dbData[0].org_key);
       dbData.forEach((row) => {
         const tableName = row["tablename"];
         let table = orgSchema.getTable(tableName);
-        table ||= orgSchema.addTable(tableName);
+        table ||= orgSchema.addTable(tableName, row["tableschema"]);
         // See if there's a value in either field. If one is set but not the other, addField will catch it
         if (row["fldname"] || row["fldtype"]) {
           table.addField(row["fldname"], row["fldtype"]);
@@ -76,12 +83,22 @@ export default class OrganizationSchema {
 }
 
 export class SchemaTable {
-  #name;
+  #name: string;
+  #namespace: string | undefined;
   #mapFields: Map<string, SchemaField>;
 
-  public constructor(name: string) {
+  public constructor(name: string, namespace: string | undefined) {
     this.#name = name;
+    this.#namespace = namespace;
     this.#mapFields = new Map<string, SchemaField>();
+  }
+
+  public get name() {
+    return this.#name;
+  }
+
+  public get namespace() {
+    return this.#namespace;
   }
 
   public addField(name: string, type: string): SchemaField {
