@@ -79,7 +79,6 @@ export default class Settings {
       }),
       region: await this.getStringValue(SettingType.AWSRegion),
     });
-    console.log(`About to make call to Secrets Manager`);
     const response = await client.send(
       new GetSecretValueCommand({
         SecretId: nativeName,
@@ -98,9 +97,6 @@ export default class Settings {
     settingInfo: SettingInfo
   ): Promise<unknown> {
     const nativeName = this.getNativeName(settingInfo);
-    console.log(
-      `Value from local returning ${nativeName} for ${settingInfo.source}`
-    );
     return nativeName;
   }
 
@@ -108,17 +104,11 @@ export default class Settings {
     if (!settingInfo)
       throw new Error("SettingInfo parameter must have a value");
     if (settingInfo.nativeName) {
-      console.log(
-        `Returning from getNativeName value: ${settingInfo.nativeName}`
-      );
       return settingInfo.nativeName;
     }
     const childSettingInfo = this.SETTINGS_VALUES[settingInfo.settingValue];
     if (!childSettingInfo)
       throw new Error(`Did not find setting info for ${childSettingInfo}`);
-    console.log(
-      `Doing recursive call into getNativeName: ${settingInfo.source} / ${childSettingInfo.source}`
-    );
     return this.getNativeName(childSettingInfo);
   }
 
