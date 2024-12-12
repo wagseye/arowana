@@ -1,30 +1,84 @@
 import pg from "pg";
+import format from "pg-format";
 const { Pool, Client } = pg;
 import Settings, { SettingType } from "./settings";
-import QueryFormatter from "./query_formatter";
+import {
+  SelectQueryFormatter,
+  InsertQueryFormatter,
+  UpdateQueryFormatter,
+  DeleteQueryFormatter,
+} from "./query_formatter";
+import OrganizationSchema from "./org_schema";
 
 export default class DatabaseConnector {
   static #pool;
 
-  public static async query(q: object): Promise<object[]> {
-    const sql = QueryFormatter.toSQL(q);
-    return this.runSql(sql);
+  public static async select(query: object, orgId: string): Promise<object[]> {
+    const orgSchema = await OrganizationSchema.getOrganizationSchema(orgId);
+    const sql = new SelectQueryFormatter(query, orgSchema).toSql();
+    return await this.query(sql);
   }
 
-  public static async runSql(sql: string) {
+  public static async insert(query: object, orgId: string): Promise<object[]> {
+    const orgSchema = await OrganizationSchema.getOrganizationSchema(orgId);
+    const sql = new InsertQueryFormatter(query, orgSchema).toSql();
+    const rows = [];
+    for (const q of sql) {
+      const res = await this.runSql(q);
+      if (res && res["rows"]) rows.push(...res["rows"]);
+    }
+    return rows;
+  }
+
+  public static async update(query: object, orgId: string): Promise<object[]> {
+    const orgSchema = await OrganizationSchema.getOrganizationSchema(orgId);
+    const sql = new UpdateQueryFormatter(query, orgSchema).toSql();
+    const rows = [];
+    for (const q of sql) {
+      const res = await this.runSql(q);
+      if (res && res["rows"]) rows.push(...res["rows"]);
+    }
+    return rows;
+  }
+
+  public static async delete(query: object, orgId: string): Promise<object[]> {
+    const orgSchema = await OrganizationSchema.getOrganizationSchema(orgId);
+    const sql = new DeleteQueryFormatter(query, orgSchema).toSql();
+    const rows = [];
+    for (const q of sql) {
+      const res = await this.runSql(q);
+      if (res && res["rows"]) rows.push(...res["rows"]);
+    }
+    return rows;
+  }
+
+  // query() is a wrapper function that runs the specified query and returns only the records (as opposed to the rest of the metadata from the db)
+  public static async query(sql: string, args = undefined) {
+    const res = await this.runSql(sql, args);
+    const rows = res["rows"];
+    if (!rows) throw new Error('Query result does not have a "rows" element');
+    this.logQueryResult(rows);
+    return rows;
+  }
+
+  public static async runSql(sql: string, args = undefined) {
     try {
       await this.connect();
+
       console.log("About to execute query: " + sql);
-      const res = await this.#pool.query(sql);
-      if (res) {
-        if (!("rows" in res))
-          throw new Error('Query result does not have a "rows" value');
-        const rows = res.rows;
-        console.log("Query result: " + JSON.stringify(rows));
-        return rows;
+      let res;
+      if (args) {
+        res = await this.#pool.query(
+          sql,
+          args instanceof Array ? args : [args]
+        );
       } else {
+        res = await this.#pool.query(sql);
+      }
+      if (!res) {
         console.log(`Query did not return any results: ${JSON.stringify(res)}`);
       }
+      return res;
     } catch (err) {
       if (err instanceof Error) {
         console.log(
@@ -52,17 +106,18 @@ export default class DatabaseConnector {
   private static async connect(): Promise<void> {
     if (this.#pool) return;
 
-    console.log("We need to create a connection pool before executing query");
+    console.log(
+      "No connection pool exists, creating one before executing query"
+    );
 
     try {
       let dbCreds: object = await Settings.getObjectValue(
         SettingType.DatabaseCredentials
       );
-      console.log(`Retrieved secret, host=${dbCreds["host"]}`);
 
       this.validateDatabaseCredentials(dbCreds);
 
-      this.#pool = new Pool({
+      this.#pool = await new Pool({
         user: dbCreds["username"],
         password: dbCreds["password"],
         host: dbCreds["host"],
@@ -105,5 +160,20 @@ export default class DatabaseConnector {
       if (!(fld in dbCreds) || !dbCreds[fld])
         throw new Error(`Database credentials must contain a "${fld}" value`);
     });
+  }
+
+  private static logQueryResult(rows: object[]): void {
+    const MAX_ROWS = 5;
+    if (rows.length > MAX_ROWS) {
+      console.log(
+        `Query returned ${rows.length} rows: ${JSON.stringify(
+          rows.slice(0, MAX_ROWS)
+        )} [+ ${rows.length - MAX_ROWS} more]`
+      );
+    } else {
+      console.log(
+        `Query returned ${rows.length} rows: ${JSON.stringify(rows)}`
+      );
+    }
   }
 }
