@@ -5,8 +5,8 @@ AS $function$
 DECLARE
 BEGIN
     EXECUTE format('CREATE TABLE IF NOT EXISTS %s.%s()', NEW.table_schema, NEW.table_name);
-    INSERT INTO object_fields (object_id, name, label, type)
-        VALUES (NEW.id, 'id', 'id', 'text');
+    INSERT INTO object_fields (object_id, name, label, type, not_null)
+        VALUES (NEW.id, 'id', 'id', 'text', true);
     EXECUTE format('CREATE OR REPLACE TRIGGER populate_%s_%s_id BEFORE INSERT ON %s.%s FOR EACH ROW EXECUTE FUNCTION populate_new_record_id()',
         NEW.table_schema, NEW.table_name, NEW.table_schema, NEW.table_name);
     RETURN NEW;

@@ -38,13 +38,15 @@ export default class TestCreateObjectFieldTriggers {
 
     // Make sure object_fields records were created for ids for the new tables
     res = await Database.runSql(
-      `SELECT name, type FROM object_fields WHERE object_id IN ('${objIds[0]}', '${objIds[1]}')`
+      `SELECT name, type, not_null FROM object_fields WHERE object_id IN ('${objIds[0]}', '${objIds[1]}')`
     );
     Test.assertEquals(2, res.length);
     Test.assertEquals("id", res[0].name);
     Test.assertEquals("text", res[0].type);
+    Test.assertEquals(true, res[0].not_null);
     Test.assertEquals("id", res[1].name);
     Test.assertEquals("text", res[1].type);
+    Test.assertEquals(true, res[1].not_null);
 
     // Make sure id columns were generated on the new tables
     res = await Database.runSql(
