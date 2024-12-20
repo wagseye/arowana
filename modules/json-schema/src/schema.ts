@@ -3,12 +3,46 @@ import { validateSchema } from "./validation";
 
 export class FieldSchema {
   name: string;
-  type: string;
+  db_name: string;
+  type: "id" | "string" | "number" | "integer" | "date" | "datetime";
   required: boolean;
 
-  public constructor(name: string, type: string, required: boolean) {
+  public constructor(
+    name: string,
+    db_name: string,
+    type: "id" | "string" | "number" | "integer" | "date" | "datetime",
+    required: boolean = false
+  ) {
     this.name = name;
+    this.db_name = db_name || name;
     this.type = type;
+    this.required = required;
+  }
+}
+
+export class ReferenceFieldSchema {
+  name: string;
+  db_name: string;
+  type: "reference";
+  foreignObject: string;
+  foreignLookupField: string;
+  foreignRelationName: string;
+  required: boolean;
+
+  public constructor(
+    name: string,
+    db_name: string,
+    foreignObject: string,
+    foreignLookupField: string,
+    foreignRelationName: string,
+    required: boolean = false
+  ) {
+    this.type = "reference";
+    this.name = name;
+    this.db_name = db_name || name;
+    this.foreignObject = foreignObject;
+    this.foreignLookupField = foreignLookupField;
+    this.foreignRelationName = foreignRelationName;
     this.required = required;
   }
 }
@@ -16,7 +50,7 @@ export class FieldSchema {
 export class TableSchema {
   name: string;
   namespace: string | undefined;
-  fields: FieldSchema[];
+  fields: (FieldSchema | ReferenceFieldSchema)[];
 
   public constructor(name: string, namespace: string | undefined) {
     this.name = name;
