@@ -1,5 +1,5 @@
 import { TrustedDatabaseInterface, QueryResponse } from "database-interface";
-import { validateSchema } from "./validation";
+import { validateSchema } from "./validation.js";
 
 export class FieldSchema {
   name: string;

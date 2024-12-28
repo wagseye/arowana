@@ -1,19 +1,26 @@
 {
   "name": "json-schema",
-  "main": "./src/index.ts",
-  "localmodulesdir": "../../modules",
+  "version": "1.0.0",
+  "exports": "./dist/index.js",
+  "type": "module",
+  "private": true,
   "scripts": {
+    "build": "(npm list install-local || npm install --no-save install-local) && npx install-local && npx tsc",
+    "test": "mocha test",
     "start": "npx tsx ./src/index.ts"
   },
   "dependencies": {
-    "ajv": "^8.17.1",
-    "object-inspect": "^1.13.3",
-    "the_thing": "file:../test",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "import-sync": "^2.2.2"
   },
   "devDependencies": {
     "@types/ajv": "^1.0.4",
-    "database-interface": "file:../database-interface"
+    "chai": "^5.1.2",
+    "install-local": "^3.0.1",
+    "mocha": "^11.0.1",
+    "ts-node": "^10.9.2"
+  },
+  "localDependencies": {
+    "data-abstraction": "../data-abstraction",
+    "database-interface": "../database-interface"
   }
 }
