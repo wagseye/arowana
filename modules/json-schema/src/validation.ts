@@ -4,22 +4,22 @@ import {
   TableSchema,
   FieldSchema,
   ReferenceFieldSchema,
-} from "./schema";
+} from "./schema.js";
 
-const orgSchema: JSONSchemaType<OrgSchema> = {
+const orgSchema = {
   $id: "orgSchema",
   type: "object",
   additionalProperties: false,
   properties: {
     tables: {
       type: "array",
-      items: { type: "object" } as JSONSchemaType<TableSchema>,
+      items: { $ref: "tableSchema" },
     },
   },
   required: ["tables"],
 };
 
-const tableSchema: JSONSchemaType<TableSchema> = {
+const tableSchema = {
   $id: "tableSchema",
   type: "object",
   additionalProperties: false,
@@ -33,15 +33,15 @@ const tableSchema: JSONSchemaType<TableSchema> = {
     },
     fields: {
       type: "array",
-      items: { type: "object" } as JSONSchemaType<
-        FieldSchema | ReferenceFieldSchema
-      >,
+      items: {
+        anyOf: [{ $ref: "fieldSchema" }, { $ref: "referenceFieldSchema" }],
+      },
     },
   },
   required: ["name", "fields"],
 };
 
-const fieldSchema: JSONSchemaType<FieldSchema> = {
+const fieldSchema = {
   $id: "fieldSchema",
   type: "object",
   additionalProperties: false,
@@ -57,7 +57,7 @@ const fieldSchema: JSONSchemaType<FieldSchema> = {
   required: ["name", "type"],
 };
 
-const referenceFieldSchema: JSONSchemaType<ReferenceFieldSchema> = {
+const referenceFieldSchema = {
   $id: "referenceFieldSchema",
   type: "object",
   additionalProperties: false,
@@ -83,7 +83,6 @@ const referenceFieldSchema: JSONSchemaType<ReferenceFieldSchema> = {
 };
 
 export function validateSchema(value: object) {
-  console.log("Validating JSON: " + JSON.stringify(value));
   const ajv = new Ajv({ verbose: true });
   const validate = ajv
     .addSchema(fieldSchema)
@@ -91,12 +90,9 @@ export function validateSchema(value: object) {
     .addSchema(tableSchema)
     .compile(orgSchema);
 
-  console.log("Compilation succeeded");
-
   if (validate(value)) {
     return true;
   } else {
-    console.log("Validation errors: " + ajv.errorsText(validate.errors));
     return false;
   }
 }
