@@ -11,35 +11,8 @@ import {
   DbObjectDateTimeField,
 } from "data-abstraction";
 
-// let DbObject;
-// let DbObjectIdField;
-// let DbObjectStringField;
-// let DbObjectReferenceField;
-// let DbObjectIntegerField;
-// let DbObjectNumberField;
-// let DbObjectDateField;
-// let DbObjectDateTimeField;
-
 export default class DataObjectGenerator {
   public static generateClasses(schema: object): { [key: string]: object } {
-    /*
-    const module = await CustomImport.importSiblingModule("data-abstraction");
-    // console.log("module PWD: " + process.cwd());
-    // const module_name = `${process.cwd()}/node_modules/data-abstraction/src/index.js`;
-    // const module = await import(module_name);
-    DbObject = module["DbObject"];
-    DbObjectIdField = module["DbObjectIdField"];
-    DbObjectStringField = module["DbObjectStringField"];
-    DbObjectReferenceField = module["DbObjectReferenceField"];
-    DbObjectIntegerField = module["DbObjectIntegerField"];
-    DbObjectNumberField = module["DbObjectNumberField"];
-    DbObjectDateField = module["DbObjectDateField"];
-    DbObjectDateTimeField = module["DbObjectDateTimeField"];
-    console.log(`DbObject: ` + DbObject);
-    //console.log(`Module components: ${JSON.stringify(module)}`);
-    console.log("Successfully loaded data-abstraction module");
-  */
-
     if (!validateSchema(schema)) throw new Error("Schema format is invalid");
     let objects = {};
     schema["tables"].forEach((tblSchema) => {
@@ -53,9 +26,6 @@ export default class DataObjectGenerator {
   }
 
   public static generateClass(schema: object): object {
-    // if (!tblSchema || !(tblSchema instanceof TableSchema))
-    //   throw new Error("Invalid table schema");
-
     let newClass = class extends DbObject {};
     console.log(
       "Just created class: " + JSON.stringify(newClass === undefined)
