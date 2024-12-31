@@ -1,0 +1,26 @@
+{
+  "name": "data-abstraction",
+  "version": "1.0.0",
+  "exports": "./dist/index.js",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "(npm list install-local || npm install --no-save install-local) && npx install-local && npx tsc",
+    "test": "cd ../data-abstraction-test/ && npx install-local && npx mocha test"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "install-local": "^3.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  },
+  "localDependencies": {
+    "database-interface": "../database-interface",
+    "json-schema": "../json-schema"
+  }
+}
