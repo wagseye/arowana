@@ -1,0 +1,24 @@
+{
+  "name": "json-schema-test",
+  "version": "1.0.0",
+  "description": "",
+  "exports": "src/index.js",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "npx tsx ./src/index.ts",
+    "test": "mocha test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "chai": "^5.1.2",
+    "install-local": "^3.0.1",
+    "mocha": "^11.0.1"
+  },
+  "localDependencies": {
+    "json-schema": "../json-schema",
+    "data-abstraction": "../data-abstraction"
+  }
+}
