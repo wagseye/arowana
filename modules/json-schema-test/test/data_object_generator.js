@@ -125,8 +125,8 @@ describe("User", function () {
       expect(User.name).to.equal("User");
     });
 
-    it("has exactly seven own properties", function () {
-      expect(props.length).to.equal(7);
+    it("has exactly eight own properties", function () {
+      expect(props.length).to.equal(8);
     });
 
     it("has a name property of type DbObjectStringField", function () {
