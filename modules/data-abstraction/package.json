@@ -6,7 +6,8 @@
   "private": true,
   "scripts": {
     "build": "(npm list install-local || npm install --no-save install-local) && npx install-local && npx tsc",
-    "test": "cd ../data-abstraction-test/ && npx install-local && npx mocha test"
+    "test": "cd ../data-abstraction-test/ && npx install-local && npx mocha test",
+    "build/test": "npm run build && npm run test"
   },
   "author": "",
   "license": "ISC",
