@@ -1,5 +1,4 @@
 import { validateSchema } from "./validation.js";
-import CustomImport from "./custom_import.js";
 import {
   DbObject,
   DbObjectIdField,
@@ -38,6 +37,9 @@ export default class DataObjectGenerator {
       configurable: true,
     });
 
+    newClass["tableName"] = () => {
+      return schema["db_name"] || schema["name"];
+    };
     // The "id" field is a special case. It should always be present, but we also need to remove it from
     // the table schema if it exists.
     this.setClassVariable(newClass, "id", DbObject.id, { enumerable: true });

@@ -31,6 +31,10 @@ const tableSchema = {
       type: "string",
       nullable: true,
     },
+    db_name: {
+      type: "string",
+      nullable: true,
+    },
     fields: {
       type: "array",
       items: {
