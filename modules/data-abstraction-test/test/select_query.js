@@ -5,23 +5,85 @@ const dbSchema =
   // prettier-ignore
   {
       name: "User",
+      db_name: "users",
       namespace: "public",
       fields: [
           { name: "firstName", db_name: "first_name", type: "string", required: true, },
           { name: "lastName", db_name: "last_name", type: "string", required: true, },
       ]
   };
-
 const User = DataObjectGenerator.generateClass(dbSchema);
-let query = User.select(User.FirstName)
-  .where(User.LastName.equals("Wagner"))
-  .toJSON();
+
 describe("Select Query", () => {
-  it("should generate a select query", () => {
-    expect(query).to.deep.equal({
-      type: "select",
-      table: "users",
-      where: { left: "lasttName", operator: "=", right: "Wagner" },
+  describe("select fields", () => {
+    describe("provided a string", () => {
+      it("should list the specified field", () => {
+        const query = User.select("firstName");
+        expect(query.toJSON()["fields"]).to.deep.equal(["firstName"]);
+      });
+    });
+
+    describe("provided a DbObjectField", () => {
+      it("should list the specified field", () => {
+        const query = User.select(User.FirstName);
+        expect(query.toJSON()["fields"]).to.deep.equal(["firstName"]);
+      });
+    });
+
+    describe("multiple select fields specified as separate arguments", () => {
+      it("should list the specified fields", () => {
+        const query = User.select(User.FirstName, User.LastName);
+        expect(query.toJSON()["fields"]).to.deep.equal([
+          "firstName",
+          "lastName",
+        ]);
+      });
+    });
+
+    describe("mixed select fields specified as separate arguments", () => {
+      it("should list the specified fields", () => {
+        const query = User.select("firstName", User.LastName);
+        expect(query.toJSON()["fields"]).to.deep.equal([
+          "firstName",
+          "lastName",
+        ]);
+      });
+    });
+
+    describe("multiple select fields specified in a list", () => {
+      it("should list the specified fields", () => {
+        const query = User.select([User.FirstName, User.LastName]);
+        expect(query.toJSON()["fields"]).to.deep.equal([
+          "firstName",
+          "lastName",
+        ]);
+      });
+    });
+
+    describe("mixed select fields specified in a list", () => {
+      it("should list the specified fields", () => {
+        const query = User.select(["firstName", User.LastName]);
+        expect(query.toJSON()["fields"]).to.deep.equal([
+          "firstName",
+          "lastName",
+        ]);
+      });
+    });
+
+    describe("multiple select fields specified separately", () => {
+      it("should list the specified fields", () => {
+        const query = User.select(User.FirstName).select(User.LastName);
+        expect(query.toJSON()["fields"]).to.deep.equal([
+          "firstName",
+          "lastName",
+        ]);
+      });
+    });
+
+    describe("no select fields", () => {
+      it("should specify * fields", () => {
+        expect(User.select().toJSON()["fields"]).to.equal("*");
+      });
     });
   });
 });
