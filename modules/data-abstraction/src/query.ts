@@ -106,20 +106,42 @@ export class SelectQuery<T extends DbObject> extends Query<T> {
     this.#queryObject["fields"] = "*";
   }
 
-  select(...fields: (DbObjectField | string)[]): Query<T> {
+  select(
+    ...fields: (DbObjectField | string | DbObjectField[] | string[])[]
+  ): Query<T> {
     if (fields && fields.length) {
-      const fieldNames = fields.map((fld) => {
-        if (typeof fld === "string") return fld;
-        if (fld instanceof DbObjectField) return fld.fieldName;
-        throw new Error(
-          "Provided fields must be strings or instances of DbObjectField"
-        );
-      });
+      const fieldNames: string[] = fields.reduce((list: string[], fld) => {
+        if (typeof fld === "string") {
+          // String should be used as-is
+          list.push(fld);
+        } else if (fld instanceof DbObjectField) {
+          // DbObject fields should be dereferenced to get the name
+          list.push(fld.fieldName);
+        } else if (fld instanceof Array) {
+          // Arrays should be interpreted same as above
+          fld.forEach((item) => {
+            if (typeof item === "string") {
+              list.push(item);
+            } else if (item instanceof DbObjectField) {
+              list.push(item.fieldName);
+            } else {
+              throw new Error(
+                "Provided list fields must be strings or instances of DbObjectField"
+              );
+            }
+          });
+        } else {
+          throw new Error(
+            "Provided fields must be strings or instances of DbObjectField"
+          );
+        }
+        return list;
+      }, []) as string[]; // [] is the initial accumulator for reduce method, not sure why TS needs the typecast either
 
       if (this.#queryObject["fields"] === "*") {
         this.#queryObject["fields"] = fieldNames;
       } else {
-        this.#queryObject["fields"].push(fieldNames);
+        this.#queryObject["fields"].push(...fieldNames);
       }
     }
     return this;
