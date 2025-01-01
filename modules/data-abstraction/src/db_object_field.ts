@@ -45,6 +45,14 @@ export default abstract class DbObjectField {
     return new ConditionalExpression(this.fieldName, "<=", value);
   }
 
+  public isNull(): ConditionalExpression {
+    return new ConditionalExpression(this.fieldName, "IS NULL", null);
+  }
+
+  public isNotNull(): ConditionalExpression {
+    return new ConditionalExpression(this.fieldName, "IS NOT NULL", null);
+  }
+
   public toString() {
     console.log("In DbObjectField.toString(): " + this.#fieldName);
     return this.#fieldName;
