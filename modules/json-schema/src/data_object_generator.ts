@@ -37,43 +37,47 @@ export default class DataObjectGenerator {
       configurable: true,
     });
 
+    // Create the static method "tableName" that will return the database name (if provided) or the common name
     newClass["tableName"] = () => {
       return schema["db_name"] || schema["name"];
     };
+
     // The "id" field is a special case. It should always be present, but we also need to remove it from
     // the table schema if it exists.
     this.setClassVariable(newClass, "id", DbObject.id, { enumerable: true });
     const fields = schema["fields"]?.filter((fld) => fld.name !== "id");
 
     fields.forEach((field) => {
+      console.log(`field: ${JSON.stringify(field)}`);
+      let staticFieldName = field.db_name || field.name;
       let staticField;
       switch (field.type) {
         case "id":
-          staticField = new DbObjectIdField(field.name);
+          staticField = new DbObjectIdField(staticFieldName);
           break;
         case "string":
-          staticField = new DbObjectStringField(field.name);
+          staticField = new DbObjectStringField(staticFieldName);
           break;
         // TODO: get this to work properly
         case "reference":
           staticField = new DbObjectReferenceField(
-            field.name,
+            staticFieldName,
             "temp",
             field.name,
             "temp"
           );
           break;
         case "integer":
-          staticField = new DbObjectIntegerField(field.name);
+          staticField = new DbObjectIntegerField(staticFieldName);
           break;
         case "number":
-          staticField = new DbObjectNumberField(field.name);
+          staticField = new DbObjectNumberField(staticFieldName);
           break;
         case "date":
-          staticField = new DbObjectDateField(field.name);
+          staticField = new DbObjectDateField(staticFieldName);
           break;
         case "datetime":
-          staticField = new DbObjectDateTimeField(field.name);
+          staticField = new DbObjectDateTimeField(staticFieldName);
           break;
         default:
           throw new Error(`Unrecognized field type: ${field.type}`);
