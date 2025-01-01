@@ -180,7 +180,6 @@ export class SelectQuery<T extends DbObject> extends Query<T> {
       throw new Error("Value passed to limit must be a positive integer");
     }
     this.#queryObject["limit"] = count;
-    //this.#limitClause.setLimit(count);
     return this;
   }
 
