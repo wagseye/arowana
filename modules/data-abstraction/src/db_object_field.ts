@@ -54,7 +54,6 @@ export default abstract class DbObjectField {
   }
 
   public toString() {
-    console.log("In DbObjectField.toString(): " + this.#fieldName);
     return this.#fieldName;
   }
 }
