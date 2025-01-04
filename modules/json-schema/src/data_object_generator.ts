@@ -16,9 +16,6 @@ export default class DataObjectGenerator {
     let objects = {};
     schema["tables"].forEach((tblSchema) => {
       let newClass = this.generateClass(tblSchema);
-      console.log(
-        `Created "${tblSchema.name}" class: ${JSON.stringify(newClass)}`
-      );
       objects[tblSchema.name] = newClass;
     });
     return objects;
@@ -26,11 +23,7 @@ export default class DataObjectGenerator {
 
   public static generateClass(schema: object): object {
     let newClass = class extends DbObject {};
-    console.log(
-      "Just created class: " + JSON.stringify(newClass === undefined)
-    );
     // TODO: Figure out how to use the namespace here
-    console.log("Naming class " + schema["name"]);
     this.setClassVariable(newClass, "name", schema["name"], {
       writable: false,
       enumerable: false,
@@ -48,40 +41,40 @@ export default class DataObjectGenerator {
     const fields = schema["fields"]?.filter((fld) => fld.name !== "id");
 
     fields.forEach((field) => {
-      console.log(`field: ${JSON.stringify(field)}`);
-      let staticFieldName = field.db_name || field.name;
       let staticField;
       switch (field.type) {
         case "id":
-          staticField = new DbObjectIdField(staticFieldName);
+          staticField = new DbObjectIdField(field.name);
           break;
         case "string":
-          staticField = new DbObjectStringField(staticFieldName);
+          staticField = new DbObjectStringField(field.name);
           break;
         // TODO: get this to work properly
         case "reference":
           staticField = new DbObjectReferenceField(
-            staticFieldName,
+            field.name,
             "temp",
             field.name,
             "temp"
           );
           break;
         case "integer":
-          staticField = new DbObjectIntegerField(staticFieldName);
+          staticField = new DbObjectIntegerField(field.name);
           break;
         case "number":
-          staticField = new DbObjectNumberField(staticFieldName);
+          staticField = new DbObjectNumberField(field.name);
           break;
         case "date":
-          staticField = new DbObjectDateField(staticFieldName);
+          staticField = new DbObjectDateField(field.name);
           break;
         case "datetime":
-          staticField = new DbObjectDateTimeField(staticFieldName);
+          staticField = new DbObjectDateTimeField(field.name);
           break;
         default:
           throw new Error(`Unrecognized field type: ${field.type}`);
       }
+      if (field.db_name) staticField.dbName = field.db_name;
+
       // Create the static variable that holds the DbObjectField
       const staticFldName =
         field.name.charAt(0).toUpperCase() + field.name.slice(1);
@@ -102,7 +95,6 @@ export default class DataObjectGenerator {
         }
       );
     });
-    console.log("About to return class: " + JSON.stringify(newClass));
     return newClass;
   }
 
