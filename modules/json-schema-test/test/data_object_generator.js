@@ -151,92 +151,124 @@ describe("User", function () {
   });
 
   const user = new User();
-
-  it("is an instance of DbObject", function () {
-    expect(user).to.be.instanceOf(DbObject);
-  });
-
   describe("instance", function () {
-    const props = Object.getOwnPropertyNames(Object.getPrototypeOf(user));
+    describe('created with "new"', function () {
+      it("is an instance of DbObject", function () {
+        expect(user).to.be.instanceOf(DbObject);
+      });
+      const props = Object.getOwnPropertyNames(Object.getPrototypeOf(user));
 
-    it("has exactly seven own properties", function () {
-      expect(props.length).to.equal(7);
+      it("has exactly seven own properties", function () {
+        expect(props.length).to.equal(7);
+      });
+
+      it("has a constructor", function () {
+        expect(props.includes("constructor")).to.be.true;
+      });
+
+      describe("name property", function () {
+        it("exists", function () {
+          expect(props.includes("name")).to.be.true;
+        });
+
+        it("can be set", function () {
+          user.name = "Joe";
+          //        expect((user.name = "Joe")).to.not.throw();
+        });
+
+        it("can be read", function () {
+          expect(user.name).to.equal("Joe");
+        });
+      });
+
+      describe("age property", function () {
+        it("exists", function () {
+          expect(props.includes("age")).to.be.true;
+        });
+
+        it("can be set", function () {
+          user.age = 21;
+        });
+
+        it("can be read", function () {
+          expect(user.age).to.equal(21);
+        });
+      });
+
+      describe("organizationId property", function () {
+        it("exists", function () {
+          expect(props.includes("organizationId")).to.be.true;
+        });
+
+        it("can be set", function () {
+          user.organizationId = "abcdefghijklmno";
+        });
+
+        it("can be read", function () {
+          expect(user.organizationId.toString()).to.equal("abcdefghijklmno");
+        });
+      });
+
+      describe("createdOn property", function () {
+        it("exists", function () {
+          expect(props.includes("createdOn")).to.be.true;
+        });
+
+        const now = new Date();
+        it("can be set", function () {
+          user.createdOn = now;
+        });
+
+        it("can be read", function () {
+          expect(user.createdOn).to.equal(now);
+        });
+      });
+
+      describe("modifiedAt property", function () {
+        it("exists", function () {
+          expect(props.includes("modifiedAt")).to.be.true;
+        });
+
+        const now = new Date();
+        it("can be set", function () {
+          user.modifiedAt = now;
+        });
+
+        it("can be read", function () {
+          expect(user.modifiedAt).to.equal(now);
+        });
+      });
     });
+    describe('created with "newInstance()"', function () {
+      const user2 = user.class.newInstance();
 
-    it("has a constructor", function () {
-      expect(props.includes("constructor")).to.be.true;
-    });
-
-    describe("name property", function () {
-      it("exists", function () {
-        expect(props.includes("name")).to.be.true;
+      it("is an instance of DbObject", function () {
+        expect(user2).to.be.instanceOf(DbObject);
       });
 
-      it("can be set", function () {
-        user.name = "Joe";
-        //        expect((user.name = "Joe")).to.not.throw();
+      it("has exactly seven own properties", function () {
+        expect(
+          Object.getOwnPropertyNames(Object.getPrototypeOf(user2)).length
+        ).to.equal(7);
       });
 
-      it("can be read", function () {
-        expect(user.name).to.equal("Joe");
-      });
-    });
-
-    describe("age property", function () {
-      it("exists", function () {
-        expect(props.includes("age")).to.be.true;
+      it("has a constructor", function () {
+        expect(user2).to.have.property("constructor");
       });
 
-      it("can be set", function () {
-        user.age = 21;
-      });
+      describe("name property", function () {
+        it("exists", function () {
+          expect(user2).to.have.property("name");
+        });
 
-      it("can be read", function () {
-        expect(user.age).to.equal(21);
-      });
-    });
+        it("can be set", function () {
+          user2.name = "Bob";
+          //        expect((user.name = "Joe")).to.not.throw();
+        });
 
-    describe("organizationId property", function () {
-      it("exists", function () {
-        expect(props.includes("organizationId")).to.be.true;
-      });
-
-      it("can be set", function () {
-        user.organizationId = "abcdefghijklmno";
-      });
-
-      it("can be read", function () {
-        expect(user.organizationId.toString()).to.equal("abcdefghijklmno");
-      });
-    });
-
-    describe("createdOn property", function () {
-      it("exists", function () {
-        expect(props.includes("createdOn")).to.be.true;
-      });
-
-      const now = new Date();
-      it("can be set", function () {
-        user.createdOn = now;
-      });
-
-      it("can be read", function () {
-        expect(user.createdOn).to.equal(now);
-      });
-    });
-
-    describe("modifiedAt property", function () {
-      it("exists", function () {
-        expect(props.includes("modifiedAt")).to.be.true;
-      });
-
-      const now = new Date();
-      it("can be set", function () {
-        user.modifiedAt = now;
-      });
-
-      it("can be read", function () {
-        expect(user.modifiedAt).to.equal(now);
+        it("can be read", function () {
+          expect(user2.name).to.equal("Bob");
+        });
       });
     });
   });
