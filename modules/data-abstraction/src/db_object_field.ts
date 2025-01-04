@@ -9,9 +9,18 @@ export type FieldType = string | number | Id | Date;
 
 export default abstract class DbObjectField {
   #fieldName: string;
+  #dbName: string;
 
   public get fieldName() {
     return this.#fieldName;
+  }
+
+  public get dbName() {
+    return this.#dbName || this.#fieldName;
+  }
+
+  public set dbName(value: string) {
+    this.#dbName = value;
   }
 
   public constructor(fieldName: string) {
@@ -22,39 +31,39 @@ export default abstract class DbObjectField {
   public abstract coerceType(value: FieldType): FieldType;
 
   public equals(value: any): ConditionalExpression {
-    return new ConditionalExpression(this.fieldName, "=", value);
+    return new ConditionalExpression(this.dbName, "=", value);
   }
 
   public notEquals(value: any): ConditionalExpression {
-    return new ConditionalExpression(this.fieldName, "<>", value);
+    return new ConditionalExpression(this.dbName, "<>", value);
   }
 
   public greaterThan(value: any): ConditionalExpression {
-    return new ConditionalExpression(this.fieldName, ">", value);
+    return new ConditionalExpression(this.dbName, ">", value);
   }
 
   public greaterOrEqualThan(value: any): ConditionalExpression {
-    return new ConditionalExpression(this.fieldName, ">=", value);
+    return new ConditionalExpression(this.dbName, ">=", value);
   }
 
   public lessThan(value: any): ConditionalExpression {
-    return new ConditionalExpression(this.fieldName, "<", value);
+    return new ConditionalExpression(this.dbName, "<", value);
   }
 
   public lessOrEqualThan(value: any): ConditionalExpression {
-    return new ConditionalExpression(this.fieldName, "<=", value);
+    return new ConditionalExpression(this.dbName, "<=", value);
   }
 
   public isNull(): ConditionalExpression {
-    return new ConditionalExpression(this.fieldName, "IS NULL", null);
+    return new ConditionalExpression(this.dbName, "IS NULL", null);
   }
 
   public isNotNull(): ConditionalExpression {
-    return new ConditionalExpression(this.fieldName, "IS NOT NULL", null);
+    return new ConditionalExpression(this.dbName, "IS NOT NULL", null);
   }
 
   public toString() {
-    return this.#fieldName;
+    return this.#dbName;
   }
 }
 
