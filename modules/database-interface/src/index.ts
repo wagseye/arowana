@@ -27,3 +27,8 @@ export interface TrustedDatabaseInterface extends DatabaseInterface {
     args: DatabasePrimitive | DatabasePrimitive[]
   ): QueryResponse;
 }
+
+export interface TestDatabaseInterface extends DatabaseInterface {
+  setResponse(resp: object): void;
+  getLastQuery(): object;
+}
