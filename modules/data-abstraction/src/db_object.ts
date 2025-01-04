@@ -50,16 +50,6 @@ export default class DbObject {
 
   static newInstance<T extends DbObject>(dbRec: object): T {
     const proto: any = this.class;
-    console.log(`In newInstance, about to introspect proto`);
-    console.log(
-      `In newInstance, proto=${JSON.stringify(
-        Object.getOwnPropertyDescriptors(proto)
-      )}`
-    );
-    console.log(`...and done!`);
-    // This code was taken from here: https://stackoverflow.com/questions/4226646
-    // I don't fully understand it, but I tried all sorts of combinations of Object.create(proto),
-    // Object.setPrototypeOf(newObj, proto), etc. but could not get it to work any other way
     const newObj = new (proto.bind.apply(proto))();
     newObj.#dbRecord = dbRec;
     return newObj;
