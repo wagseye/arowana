@@ -1,0 +1,19 @@
+{
+  "name": "database-connector",
+  "version": "1.0.0",
+  "exports": "./dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "npx tsc"
+  },
+  "dependencies": {
+    "install-local": "^3.0.1"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  },
+  "localDependencies": {
+    "database-interface": "../database-interface"
+  }
+}
