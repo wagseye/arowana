@@ -22,7 +22,12 @@ export default class DataObjectGenerator {
   }
 
   public static generateClass(schema: object): object {
-    let newClass = class extends DbObject {};
+    let newClass = class extends DbObject {
+      constructor(props = undefined) {
+        super(props);
+      }
+    };
+
     // TODO: Figure out how to use the namespace here
     this.setClassVariable(newClass, "name", schema["name"], {
       writable: false,
