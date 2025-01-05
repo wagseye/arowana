@@ -26,11 +26,12 @@ type ConstructorType<
 export default class DbObject {
   @dbField
   static id: DbObjectField = new DbObjectIdField("id");
+  static #propsByName: Map<string, Map<string, DbObjectField>> = new Map();
+  static #propsByDbName: Map<string, Map<string, DbObjectField>> = new Map();
 
   #dbRecord: object | undefined;
   #cachedValues: Map<string, FieldType> | undefined;
   #dirtyKeys: Set<string> | undefined;
-  #props = new Map();
 
   constructor() {
     if (this.constructor == DbObject) {
@@ -40,11 +41,11 @@ export default class DbObject {
     }
   }
 
-  static get class(): Object {
+  static get class(): typeof DbObject {
     return this;
   }
 
-  get class(): Object {
+  get class(): typeof DbObject {
     return Object.getPrototypeOf(this).constructor.class;
   }
 
@@ -83,17 +84,17 @@ export default class DbObject {
     }
     // Try to get the value from our cached (previously accessed) values
     this.#cachedValues ||= new Map<string, FieldType>();
-    let value: FieldType = this.#cachedValues.get(propName);
+    let value: FieldType = this.#cachedValues.get(dbFieldObj.dbName);
     // Otherwise if we have an underlying db record, pull it from there, perform any type conversions, and cache the value
     if (!value) {
       if (this.#dbRecord) {
-        if (!(propName in this.#dbRecord))
+        if (!(dbFieldObj.dbName in this.#dbRecord))
           throw new Error(`Field not retrieved from database: "${propName}"`);
-        let strValue: string = this.#dbRecord[propName];
+        let strValue: string = this.#dbRecord[dbFieldObj.dbName];
         if (strValue) {
           value = dbFieldObj.coerceType(strValue);
         }
-        this.#cachedValues.set(propName, value);
+        this.#cachedValues.set(dbFieldObj.dbName, value);
       }
     }
     return value;
@@ -110,31 +111,87 @@ export default class DbObject {
     this.#cachedValues ||= new Map<string, FieldType>();
     const dbFieldObj = this.findDbFieldByName(propName);
     const typedValue = dbFieldObj.coerceType(value);
-    this.#cachedValues.set(propName, typedValue);
+    this.#cachedValues.set(dbFieldObj.dbName, typedValue);
 
     this.#dirtyKeys ||= new Set<string>();
-    this.#dirtyKeys.add(propName);
+    this.#dirtyKeys.add(dbFieldObj.dbName);
   }
 
-  setString(prop: string | DbObjectField, value: any): void {
-    if (value && typeof value !== "string" && !(value instanceof String)) {
-      throw new Error("Property value must be a string");
+  // TODO: add opts field to Typescript
+  public copy(other: DbObject, opts: object | undefined): void {
+    if (!other) throw "No record to copy";
+    if (!(other instanceof DbObject))
+      throw "Record to copy must be of a type that inherits DbObject";
+    if (other.class !== this.class)
+      throw "Record to copy must be of the same type as the current object";
+
+    // Copy over the underlying db record and mark all properties as "dirty"
+    if (!opts["onlyChanges"]) {
+      for (let propName in other.#dbRecord) {
+        this.#cachedValues[propName] = other.#dbRecord[propName];
+        this.#dirtyKeys.add(propName);
+      }
     }
-    this.#props.set(prop, value);
+
+    // Copy over the all "dirty" props on other and mark them as "dirty"
+    for (let propName in other.#dirtyKeys) {
+      this.#cachedValues[propName] = other.#dbRecord[propName];
+      this.#dirtyKeys.add(propName);
+    }
   }
 
-  private findDbFieldByName(propName: string): DbObjectField {
-    // This looks for the DbObjectField object on the class prototype by name, which works well enough
-    // for now but I feel will not be reliable in the future. It would be better if we could use the @dbField
-    // decorator mechanism to dynamically populate a list of fields at load time.
-    const dbFieldObj =
-      this.constructor[propName.charAt(0).toUpperCase() + propName.slice(1)];
-    if (!dbFieldObj || !(dbFieldObj instanceof DbObjectField)) {
-      throw new Error(
-        `Unknown field on ${this.constructor.name} object: "${propName}"`
-      );
+  public toJSON(): { [key: string]: any } {
+    let obj = {};
+    // First copy the underlying database record
+    if (this.#dbRecord) {
+      for (let propName in this.#dbRecord) {
+        obj[propName] = this.#dbRecord[propName];
+      }
     }
-    return dbFieldObj;
+    // Next copy over the values that have been explicitly set on the object, possibly overwriting some of the previous values
+    for (let propName in this.#dirtyKeys) {
+      obj[propName] = this.#dbRecord[propName];
+    }
+    return obj;
+  }
+
+  private findDbFieldByName(fldName: string): DbObjectField | undefined {
+    const className = this.class.name;
+    if (
+      !DbObject.#propsByName.has(className) ||
+      !DbObject.#propsByDbName.has(className)
+    ) {
+      this.class.indexFields();
+    }
+    return DbObject.#propsByName.get(className)?.get(fldName);
+  }
+
+  // TODO: figure out if we actually need this. It seems like it could be useful but I found a workaround
+  // for the original use case.
+  private findDbFieldByDbName<T>(dbName: string): DbObjectField | undefined {
+    const className = this.class.name;
+    if (
+      !DbObject.#propsByName.has(className) ||
+      !DbObject.#propsByDbName.has(className)
+    ) {
+      this.class.indexFields();
+    }
+    return DbObject.#propsByDbName.get(className)?.get(dbName);
+  }
+
+  private static indexFields() {
+    const className = this.name;
+    const byName = new Map<string, DbObjectField>();
+    const byDbName = new Map<string, DbObjectField>();
+    Object.getOwnPropertyNames(this).forEach((propName) => {
+      const prop = this[propName];
+      if (prop instanceof DbObjectField) {
+        byName.set(prop.fieldName, prop);
+        byDbName.set(prop.dbName, prop);
+      }
+    });
+    DbObject.#propsByName.set(className, byName);
+    DbObject.#propsByDbName.set(className, byDbName);
   }
 
   // Shared fields
@@ -144,11 +201,6 @@ export default class DbObject {
 
   set id(value) {
     this.set(DbObject.id, value);
-  }
-
-  public toJson(): string {
-    // Eventually we'll probably want to filter out some of these values
-    return JSON.stringify(Object.fromEntries(this.#props));
   }
 
   // Query-related methods
@@ -163,14 +215,33 @@ export default class DbObject {
     return q;
   }
 
-  static async insert<T extends DbObject>(recs: T | T[]): Promise<T[]> {
-    const recsArr = Array.isArray(recs) ? recs : [recs];
+  static async insert<T extends DbObject>(...recs: (T | T[])[]): Promise<void> {
+    if (!recs || !recs.length) {
+      throw new Error("No records provided to insert");
+    }
+    const recsToInsert = recs.flat();
     const q = new InsertQuery<T>(this.class);
-    recsArr.forEach((rec) => q.addRecord(rec, rec.#dirtyKeys));
+    recsToInsert.forEach((rec) => {
+      if (rec.id) throw "Records with id set can not be inserted";
+      if (rec.id) console.log("GFDSA: rec has id");
+      console.log(`Inserting a record, id=${rec.id}`);
+      if (rec.class !== this)
+        throw `Objects to insert must be of type ${this.name}`;
+      const recUpdates: { [key: string]: any } = {};
+      for (const propName of rec.#dirtyKeys) {
+        recUpdates[propName] = rec.#cachedValues.get(propName);
+      }
+      q.addRecord(rec, recUpdates);
+    });
 
     const insertedRecs: T[] = await q.execute();
-    recsArr.forEach((rec) => rec.#dirtyKeys.clear());
-    return insertedRecs;
+    for (let i = 0; i < recsToInsert.length; i++) {
+      let oldRec = recsToInsert[i];
+      let newRec = insertedRecs[i];
+      oldRec.#dbRecord = newRec.#dbRecord;
+      oldRec.#cachedValues.clear();
+      oldRec.#dirtyKeys.clear();
+    }
   }
 
   static async update<T extends DbObject>(recs: T | T[]): Promise<T[]> {
