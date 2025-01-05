@@ -39,7 +39,7 @@ export default class Database {
         const t: Timer = new Timer().start();
         const { default: DatabaseConnection } = await import(module_name);
         console.log(`Loaded module in ${t.stop().elapsedTime()}`);
-        this.#connection = DatabaseConnection;
+        this.#connection = new DatabaseConnection();
       } catch (ex: unknown) {
         if (ex instanceof Error) {
           console.log(
