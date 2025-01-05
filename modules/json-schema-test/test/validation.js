@@ -23,14 +23,14 @@ const dbSchema =
         },
   ]};
 
-describe("validate succeeds for a large schema", function () {
-  it("should validate a correct schema", function () {
+describe("validate succeeds for a large schema", () => {
+  it("should validate a correct schema", () => {
     expect(validateSchema(dbSchema)).to.be.true;
   });
 });
 
-describe("validate succeeds for a simple schema", function () {
-  it("should validate a correct schema", function () {
+describe("validate succeeds for a simple schema", () => {
+  it("should validate a correct schema", () => {
     expect(
       validateSchema(
         //prettier-ignore
@@ -41,8 +41,8 @@ describe("validate succeeds for a simple schema", function () {
   });
 });
 
-describe("validate does not require any fields", function () {
-  it("should pass if fields empty", function () {
+describe("validate does not require any fields", () => {
+  it("should pass if fields empty", () => {
     expect(
       validateSchema(
         //prettier-ignore
@@ -53,8 +53,8 @@ describe("validate does not require any fields", function () {
   });
 });
 
-describe("validate requires a table name element", function () {
-  it("should fail if table name missing", function () {
+describe("validate requires a table name element", () => {
+  it("should fail if table name missing", () => {
     expect(
       validateSchema(
         //prettier-ignore
@@ -64,8 +64,8 @@ describe("validate requires a table name element", function () {
   });
 });
 
-describe("validate requires a tables element", function () {
-  it("should fail if table name missing", function () {
+describe("validate requires a tables element", () => {
+  it("should fail if table name missing", () => {
     expect(
       validateSchema(
         //prettier-ignore
@@ -76,8 +76,8 @@ describe("validate requires a tables element", function () {
   });
 });
 
-describe("validate does not allow additional org elements", function () {
-  it("should fail if top level object contains invalid key", function () {
+describe("validate does not allow additional org elements", () => {
+  it("should fail if top level object contains invalid key", () => {
     expect(
       validateSchema(
         //prettier-ignore
@@ -89,8 +89,8 @@ describe("validate does not allow additional org elements", function () {
   });
 });
 
-describe("validate requires a fields element", function () {
-  it("should fail if fields missing", function () {
+describe("validate requires a fields element", () => {
+  it("should fail if fields missing", () => {
     expect(
       validateSchema(
         //prettier-ignore
@@ -100,8 +100,8 @@ describe("validate requires a fields element", function () {
   });
 });
 
-describe("validate field name is required", function () {
-  it("should fail if field name is missing", function () {
+describe("validate field name is required", () => {
+  it("should fail if field name is missing", () => {
     expect(
       validateSchema(
         //prettier-ignore
@@ -112,8 +112,8 @@ describe("validate field name is required", function () {
   });
 });
 
-describe("validate field type is required", function () {
-  it("should fail if field type is missing", function () {
+describe("validate field type is required", () => {
+  it("should fail if field type is missing", () => {
     expect(
       validateSchema(
         //prettier-ignore
@@ -124,8 +124,8 @@ describe("validate field type is required", function () {
   });
 });
 
-describe("validate basic field allows db_name", function () {
-  it("should pass if db_name is specified", function () {
+describe("validate basic field allows db_name", () => {
+  it("should pass if db_name is specified", () => {
     expect(
       validateSchema(
         //prettier-ignore
@@ -137,8 +137,8 @@ describe("validate basic field allows db_name", function () {
   });
 });
 
-describe("validate basic field allows required", function () {
-  it("should pass if required is specified", function () {
+describe("validate basic field allows required", () => {
+  it("should pass if required is specified", () => {
     expect(
       validateSchema(
         //prettier-ignore
@@ -150,8 +150,8 @@ describe("validate basic field allows required", function () {
   });
 });
 
-describe("validate basic field takes no additional properties", function () {
-  it("should fail if an unrecognized property is specified", function () {
+describe("validate basic field takes no additional properties", () => {
+  it("should fail if an unrecognized property is specified", () => {
     expect(
       validateSchema(
         //prettier-ignore
@@ -163,8 +163,8 @@ describe("validate basic field takes no additional properties", function () {
   });
 });
 
-describe("validate reference field is accepted", function () {
-  it("should pass if a reference field is provided", function () {
+describe("validate reference field is accepted", () => {
+  it("should pass if a reference field is provided", () => {
     expect(
       validateSchema(
         //prettier-ignore
@@ -176,8 +176,8 @@ describe("validate reference field is accepted", function () {
   });
 });
 
-describe("validate reference field requires name", function () {
-  it("should fail if name is missing", function () {
+describe("validate reference field requires name", () => {
+  it("should fail if name is missing", () => {
     expect(
       validateSchema(
         //prettier-ignore
@@ -189,8 +189,8 @@ describe("validate reference field requires name", function () {
   });
 });
 
-describe("validate reference field requires type", function () {
-  it("should fail if type is missing", function () {
+describe("validate reference field requires type", () => {
+  it("should fail if type is missing", () => {
     expect(
       validateSchema(
         //prettier-ignore
@@ -202,8 +202,8 @@ describe("validate reference field requires type", function () {
   });
 });
 
-describe("validate reference field requires foreignObject", function () {
-  it("should fail if foreignObject is missing", function () {
+describe("validate reference field requires foreignObject", () => {
+  it("should fail if foreignObject is missing", () => {
     expect(
       validateSchema(
         //prettier-ignore
@@ -215,8 +215,8 @@ describe("validate reference field requires foreignObject", function () {
   });
 });
 
-describe("validate reference field requires foreignLookupField", function () {
-  it("should fail if foreignLookupField is missing", function () {
+describe("validate reference field requires foreignLookupField", () => {
+  it("should fail if foreignLookupField is missing", () => {
     expect(
       validateSchema(
         //prettier-ignore
@@ -228,8 +228,8 @@ describe("validate reference field requires foreignLookupField", function () {
   });
 });
 
-describe("validate reference field requires foreignRelationName", function () {
-  it("should fail if foreignRelationName is missing", function () {
+describe("validate reference field requires foreignRelationName", () => {
+  it("should fail if foreignRelationName is missing", () => {
     expect(
       validateSchema(
         //prettier-ignore
@@ -241,8 +241,8 @@ describe("validate reference field requires foreignRelationName", function () {
   });
 });
 
-describe("validate reference field allows db_name", function () {
-  it("should pass if db_name is provided", function () {
+describe("validate reference field allows db_name", () => {
+  it("should pass if db_name is provided", () => {
     expect(
       validateSchema(
         //prettier-ignore
@@ -254,8 +254,8 @@ describe("validate reference field allows db_name", function () {
   });
 });
 
-describe("validate reference field allows required", function () {
-  it("should pass if required is provided", function () {
+describe("validate reference field allows required", () => {
+  it("should pass if required is provided", () => {
     expect(
       validateSchema(
         //prettier-ignore
@@ -267,8 +267,8 @@ describe("validate reference field allows required", function () {
   });
 });
 
-describe("validate reference field takes no additional properties", function () {
-  it("should fail if an unrecognized property is specified", function () {
+describe("validate reference field takes no additional properties", () => {
+  it("should fail if an unrecognized property is specified", () => {
     expect(
       validateSchema(
         //prettier-ignore
