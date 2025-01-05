@@ -239,6 +239,60 @@ describe("User", function () {
         });
       });
     });
+
+    describe('created with "new({properties})"', function () {
+      describe("with some properties set", function () {
+        const now = Date.now();
+        const user2 = new User({
+          name: "Joe",
+          amountPaid: 3.14,
+          createdOn: now,
+        });
+
+        it("is an instance of DbObject", function () {
+          expect(user2).to.be.instanceOf(DbObject);
+        });
+
+        it("has exactly seven own properties", function () {
+          expect(
+            Object.getOwnPropertyNames(Object.getPrototypeOf(user2)).length
+          ).to.equal(7);
+        });
+
+        it("has the name property set", function () {
+          expect(user2.name).to.equal("Joe");
+        });
+
+        it("has the amountPaid property set", function () {
+          expect(user2.amountPaid).to.equal(3.14);
+        });
+
+        it("has the createdOn property set", function () {
+          // A little massaging due to timestamp/Date conversions
+          expect(user2.createdOn.getTime()).to.equal(now);
+        });
+
+        it("has the age property unset", function () {
+          expect(user2.age).to.not.exist;
+        });
+
+        it("has the organizationId property unset", function () {
+          expect(user2.organizationId).to.not.exist;
+        });
+
+        it("has the modifiedAt property unset", function () {
+          expect(user2.modifiedAt).to.not.exist;
+        });
+      });
+
+      describe("with an invalid property set", function () {
+        it("throws an error", function () {
+          // prettier-ignore
+          expect(() => { new User({ thename: "Joe" })}).to.throw();
+        });
+      });
+    });
+
     describe('created with "newInstance()"', function () {
       const user2 = user.class.newInstance();
 

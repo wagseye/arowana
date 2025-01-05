@@ -33,12 +33,11 @@ export default class DbObject {
   #cachedValues: Map<string, FieldType> | undefined;
   #dirtyKeys: Set<string> | undefined;
 
-  constructor() {
+  constructor(props: { [key: string]: any } | undefined = undefined) {
     if (this.constructor == DbObject) {
-      throw new Error(
-        "DbObject class is abstract and can not be instantiated."
-      );
+      throw "DbObject class is abstract and can not be instantiated.";
     }
+    this.copyProperties(props);
   }
 
   static get class(): typeof DbObject {
@@ -153,6 +152,16 @@ export default class DbObject {
       obj[propName] = this.#dbRecord[propName];
     }
     return obj;
+  }
+
+  private copyProperties(
+    props: { [key: string]: any } | undefined = undefined
+  ): void {
+    if (props) {
+      for (let propName in props) {
+        this.set(propName, props[propName]);
+      }
+    }
   }
 
   private findDbFieldByName(fldName: string): DbObjectField | undefined {
