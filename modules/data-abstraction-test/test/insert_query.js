@@ -3,13 +3,9 @@ import { DataObjectGenerator } from "json-schema";
 import * as chai from "chai";
 import { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
-
 chai.use(chaiAsPromised);
 
-const module_name = "database-connector";
-const { default: DatabaseConnection } = await import(module_name);
-const db = new DatabaseConnection();
-
+const db = new (await import("database-connector")).default();
 const dbSchema =
   // prettier-ignore
   {
@@ -25,8 +21,8 @@ const dbSchema =
 db.setResponse(
   // prettier-ignore
   { "rows": [
-    {  "id": "a00aaaaaaaaaaaa", "first_name": "John", "last_name": "Doe", "age": 30, },
-    {  "id": "a00aaaaaaaaaaab", "first_name": "Bob", "last_name": null, "age": 45, }
+    {  "id": "00100abcdefghij", "first_name": "John", "last_name": "Doe", "age": 30, },
+    {  "id": "00200abcdefghij", "first_name": "Bob", "last_name": null, "age": 45, }
   ]}
 );
 
@@ -34,12 +30,12 @@ const User = DataObjectGenerator.generateClass(dbSchema);
 //await Database.connectClient();
 
 describe("Insert Query", () => {
+  const u1Props = { firstName: "John", lastName: "Doe", age: 30 };
+  const u2Props = { firstName: "Bob", age: 45 };
+
   // prettier-ignore
   describe("a single record", async () => {
-    const user = new User();
-    user.firstName = "John";
-    user.lastName = "Doe";
-    user.age = 30;
+    const user = new User(u1Props);
     let results =await User.insert(user);
 
     it("should run the correct query", async () => {
@@ -53,7 +49,7 @@ describe("Insert Query", () => {
       console.log(`User id: ${user.id} ${user.firstName} ${user.lastName} ${user.age}`);
       expect(user.toJSON()).to.deep.equal(
         // prettier-ignore
-        { "id": "a00aaaaaaaaaaaa", "first_name": "John", "last_name": "Doe", "age": 30, }
+        { "id": "00100abcdefghij", "first_name": "John", "last_name": "Doe", "age": 30, }
       );
     });
 
@@ -65,9 +61,6 @@ describe("Insert Query", () => {
   });
 
   describe("multiple records", () => {
-    const u1Props = { firstName: "John", lastName: "Doe", age: 30 };
-    const u2Props = { firstName: "Bob", age: 45 };
-
     describe("inserted using separate parameters", () => {
       it("should insert all records", async () => {
         await User.insert(new User(u1Props), new User(u2Props));
@@ -89,11 +82,21 @@ describe("Insert Query", () => {
         await User.insert(user1, user2);
         expect(user1.toJSON()).to.deep.equal(
           // prettier-ignore
-          { "id": "a00aaaaaaaaaaaa", "first_name": "John", "last_name": "Doe", "age": 30, }
+          { "id": "00100abcdefghij", "first_name": "John", "last_name": "Doe", "age": 30, }
         );
         expect(user2.toJSON()).to.deep.equal(
           // prettier-ignore
-          { "id": "a00aaaaaaaaaaab", "first_name": "Bob", "last_name": null, "age": 45, }
+          { "id": "00200abcdefghij", "first_name": "Bob", "last_name": null, "age": 45, }
+        );
+      });
+    });
+
+    describe("inserted as a list", () => {
+      it("should insert all records", async () => {
+        await User.insert([new User(u1Props), new User(u2Props)]);
+        expect(db.getLastQuery()).to.deep.equal(
+          // prettier-ignore
+          { type: "insert", table: "users", records: [{ first_name: "John", last_name: "Doe", age: 30 }, { first_name: "Bob", age: 45 }] }
         );
       });
     });
