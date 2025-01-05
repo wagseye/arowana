@@ -42,7 +42,7 @@ export default class DataObjectGenerator {
 
     // The "id" field is a special case. It should always be present, but we also need to remove it from
     // the table schema if it exists.
-    this.setClassVariable(newClass, "id", DbObject.id, { enumerable: true });
+    this.setClassVariable(newClass, "Id", DbObject.Id, { enumerable: true });
     const fields = schema["fields"]?.filter((fld) => fld.name !== "id");
 
     fields.forEach((field) => {

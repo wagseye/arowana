@@ -25,7 +25,7 @@ type ConstructorType<
 
 export default class DbObject {
   @dbField
-  static id: DbObjectField = new DbObjectIdField("id");
+  static Id: DbObjectField = new DbObjectIdField("id");
   static #propsByName: Map<string, Map<string, DbObjectField>> = new Map();
   static #propsByDbName: Map<string, Map<string, DbObjectField>> = new Map();
 
