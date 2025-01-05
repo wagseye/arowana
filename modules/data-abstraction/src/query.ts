@@ -50,16 +50,15 @@ export abstract class Query<T extends DbObject> {
   public abstract toJSON();
 
   protected async queryObjects(): Promise<T[]> {
-    const dbRows: { [index: string]: any }[] = await Query.execute(
-      this.toJSON()
-    );
+    let dbRows: { [index: string]: any }[] = await Query.execute(this.toJSON());
 
+    dbRows = dbRows["rows"];
     const objs = [];
-    dbRows.forEach((row: { [index: string]: any }) => {
+    for (const row of dbRows) {
       // @ts-ignore
       const newObj = this.#proto.newInstance(row);
       objs.push(newObj);
-    });
+    }
     return objs;
   }
 
@@ -84,7 +83,7 @@ export abstract class Query<T extends DbObject> {
       const t: Timer = new Timer().start();
       const { default: Database } = await import(module_name);
       console.log(`Loaded module in ${t.stop().elapsedTime()}`);
-      this.#database = Database;
+      this.#database = new Database();
     } catch (ex: unknown) {
       if (ex instanceof Error) {
         console.log(`Unable to load database module: ${ex.message}`);
@@ -96,7 +95,7 @@ export abstract class Query<T extends DbObject> {
 }
 
 export class SelectQuery<T extends DbObject> extends Query<T> {
-  #queryObject = {};
+  #queryObject: object = {};
 
   constructor(proto: Object) {
     super(proto);
@@ -116,14 +115,14 @@ export class SelectQuery<T extends DbObject> extends Query<T> {
           list.push(fld);
         } else if (fld instanceof DbObjectField) {
           // DbObject fields should be dereferenced to get the name
-          list.push(fld.fieldName);
+          list.push(fld.dbName);
         } else if (fld instanceof Array) {
           // Arrays should be interpreted same as above
           fld.forEach((item) => {
             if (typeof item === "string") {
               list.push(item);
             } else if (item instanceof DbObjectField) {
-              list.push(item.fieldName);
+              list.push(item.dbName);
             } else {
               throw new Error(
                 "Provided list fields must be strings or instances of DbObjectField"
@@ -163,14 +162,14 @@ export class SelectQuery<T extends DbObject> extends Query<T> {
 
   sort(...fields: string[] | DbObjectField[]): Query<T> {
     this.#queryObject["orderBy"] ||= [];
-    this.#queryObject["orderBy"].push(...fields.map((fld) => fld.toString()));
+    this.#queryObject["orderBy"].push(...fields.map((fld) => fld.dbName));
     return this;
   }
 
   sortDown(...fields: string[] | DbObjectField[]): Query<T> {
     this.#queryObject["orderBy"] ||= [];
     this.#queryObject["orderBy"].push(
-      ...fields.map((fld) => `${fld.toString()} DESC`)
+      ...fields.map((fld) => `${fld.dbName} DESC`)
     );
     return this;
   }
@@ -205,9 +204,19 @@ export class SelectQuery<T extends DbObject> extends Query<T> {
 export class InsertQuery<T extends DbObject> extends Query<T> {
   #queryObject = {};
 
-  public addRecord(rec: DbObject, changedFields: Set<string>) {
-    // Not yet implemented
+  constructor(proto: Object) {
+    super(proto);
+
+    this.#queryObject["type"] = "insert";
+    this.#queryObject["table"] = proto["tableName"]();
+    this.#queryObject["records"] = [];
   }
+
+  public addRecord(rec: DbObject, updates: { [key: string]: any }) {
+    if (!rec) throw new Error("No record provided");
+    this.#queryObject["records"].push(updates);
+  }
+
   public async execute(): Promise<T[]> {
     return await this.queryObjects();
   }
@@ -227,7 +236,7 @@ export class UpdateQuery<T extends DbObject> extends Query<T> {
     this.#queryObject["table"] = proto["tableName"];
   }
 
-  public addRecord(rec: DbObject, changedFields: Set<string>) {
+  public addRecord(rec: DbObject, updates: { [key: string]: any }) {
     if (!rec) throw new Error("No record provided");
     if (!rec.id) throw new Error("Records to be updated must have an id");
 
@@ -238,14 +247,8 @@ export class UpdateQuery<T extends DbObject> extends Query<T> {
       "=",
       rec.id
     );
-    const updates = {};
     record["updates"] = updates;
-    changedFields.forEach((fld) => {
-      if (!fld) throw new Error("Invalid field specified in update list");
-      if (fld !== "id") {
-        updates[fld] = rec.get(fld);
-      }
-    });
+    this.#queryObject["records"].push(record);
   }
 
   public async execute(): Promise<T[]> {
