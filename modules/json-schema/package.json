@@ -6,7 +6,8 @@
   "private": true,
   "scripts": {
     "build": "(npm list install-local || npm install --no-save install-local) && npx install-local && npx tsc",
-    "test": "cd ../json-schema-test/ && npx install-local && npx mocha test"
+    "test": "cd ../json-schema-test/ && npm run build && npx mocha",
+    "build/test": "npm run build && npm run test"
   },
   "dependencies": {
     "ajv": "^8.17.1"
