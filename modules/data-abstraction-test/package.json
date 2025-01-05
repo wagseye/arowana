@@ -15,11 +15,13 @@
   "license": "ISC",
   "devDependencies": {
     "chai": "^5.1.2",
+    "chai-as-promised": "^8.0.1",
     "install-local": "^3.0.1",
     "mocha": "^11.0.1"
   },
   "localDependencies": {
     "json-schema": "../json-schema",
-    "data-abstraction": "../data-abstraction"
+    "data-abstraction": "../data-abstraction",
+    "database-connector": "../database-mock"
   }
 }
