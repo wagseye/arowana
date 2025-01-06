@@ -31,6 +31,9 @@ const tableSchema = {
       type: "string",
       nullable: true,
     },
+    test_scope: {
+      type: "string",
+    },
     db_name: {
       type: "string",
       nullable: true,
