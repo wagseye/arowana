@@ -28,8 +28,12 @@ export default class DataObjectGenerator {
       }
     };
 
-    // TODO: Figure out how to use the namespace here
-    this.setClassVariable(newClass, "name", schema["name"], {
+    // In general, each test file generates its own schema based on its own needs. However, DbObject indexes
+    // the dbFields based on class name, so we need some way to differentiate the different instances that get
+    // created. The optional "test_scope" property on the table gets appended to the table name to deal with this.
+    const className =
+      schema["name"] + (schema["test_scope"] ? `_${schema["test_scope"]}` : "");
+    this.setClassVariable(newClass, "name", className, {
       writable: false,
       enumerable: false,
       configurable: true,
