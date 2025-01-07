@@ -70,7 +70,6 @@ export abstract class Query<T extends DbObject> {
     }
     const t = new Timer().start();
     const dbRows: { [index: string]: any }[] = await Query.#database!.query(q);
-    console.log(`Executed query in ${t.stop().elapsedTime()}`);
 
     return dbRows;
   }
@@ -233,22 +232,28 @@ export class UpdateQuery<T extends DbObject> extends Query<T> {
     super(proto);
 
     this.#queryObject["type"] = "update";
-    this.#queryObject["table"] = proto["tableName"];
+    this.#queryObject["table"] = proto["tableName"]();
+    this.#queryObject["records"] = [];
   }
 
   public addRecord(rec: DbObject, updates: { [key: string]: any }) {
     if (!rec) throw new Error("No record provided");
-    if (!rec.id) throw new Error("Records to be updated must have an id");
 
-    this.#queryObject["records"] ||= [];
-    const record = {};
-    record["where"] = new ConditionalExpression(
-      this.#queryObject["id"],
-      "=",
-      rec.id
-    );
-    record["updates"] = updates;
-    this.#queryObject["records"].push(record);
+    // Since we are referencing the record by the id, we do not want it to appear in the list of updates
+    delete updates.id;
+
+    // We need to go through and convert any objects into strings, or the text will not render correctly in our query
+    for (const propName in updates) {
+      const value = updates[propName];
+      if (typeof value === "object") {
+        updates[propName] = value.toString();
+      }
+    }
+    const recordJson = {
+      where: { left: "id", operator: "=", right: rec.id.toString() },
+      updates: updates,
+    };
+    this.#queryObject["records"].push(recordJson);
   }
 
   public async execute(): Promise<T[]> {
