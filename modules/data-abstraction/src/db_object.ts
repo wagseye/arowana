@@ -94,7 +94,7 @@ export default class DbObject {
       if (this.#dbRecord) {
         if (!(dbFieldObj.dbName in this.#dbRecord))
           throw new Error(`Field not retrieved from database: "${propName}"`);
-        let strValue: string = this.#dbRecord[dbFieldObj.dbName];
+        let strValue: string = this.#dbRecord[dbFieldObj.dbName] as string;
         value =
           // The empty string is a permissible value, so we explicitly test against undefined/null here
           strValue !== undefined && strValue !== null
@@ -137,31 +137,43 @@ export default class DbObject {
       throw "Record to copy must be of the same type as the current object";
 
     // Copy over the underlying db record and mark all properties as "dirty"
-    if (!opts["onlyChanges"]) {
-      for (let propName in other.#dbRecord) {
-        this.#cachedValues.set(propName, other.#dbRecord[propName]);
-        this.#dirtyKeys.add(propName);
-      }
+    if (opts && !opts["onlyChanges"]) {
+      this.#dbRecord = other.#dbRecord;
     }
 
     // Copy over the all "dirty" props on other and mark them as "dirty"
-    for (let propName in other.#dirtyKeys) {
-      this.#cachedValues.set(propName, other.#dbRecord[propName]);
-      this.#dirtyKeys.add(propName);
+    if (other.#dirtyKeys) {
+      this.#dirtyKeys ||= new Set();
+      other.#dirtyKeys?.forEach((propName) => {
+        this.#cachedValues.set(propName, other.#cachedValues.get(propName));
+        this.#dirtyKeys.add(propName);
+      });
     }
+  }
+
+  public clone<T extends DbObject>(): T {
+    let newRec: T = this.class.newInstance<T>();
+    newRec.copy(this);
+    return newRec;
   }
 
   public toJSON(): { [key: string]: any } {
     let obj = {};
     // First copy the underlying database record
     if (this.#dbRecord) {
-      for (let propName in this.#dbRecord) {
-        obj[propName] = this.#dbRecord[propName];
+      for (let dbName in this.#dbRecord) {
+        let dbField = this.findDbFieldByDbName(dbName);
+        if (!dbField) throw `Unknown field db_name: ${dbName}`;
+        let value = this.#dbRecord[dbName];
+        if (value === null) value = undefined; // convert any nulls to "undefined"
+        obj[dbField.fieldName] = value;
       }
     }
     // Next copy over the values that have been explicitly set on the object, possibly overwriting some of the previous values
-    this.#dirtyKeys.forEach((propName) => {
-      obj[propName] = this.#cachedValues.get(propName);
+    this.#dirtyKeys?.forEach((dbName) => {
+      let dbField = this.findDbFieldByDbName(dbName);
+      if (!dbField) throw `Unknown field db_name: ${dbName}`;
+      obj[dbField.fieldName] = this.#cachedValues.get(dbName);
     });
     return obj;
   }
