@@ -5,7 +5,7 @@ import { DbObjectMapper } from "./db_decorators.js";
 import DbObject from "./db_object.js";
 import Id from "./id.js";
 
-export type FieldType = string | number | Id | Date;
+export type FieldType = string | boolean | number | Id | Date;
 
 export default abstract class DbObjectField {
   #fieldName: string;
@@ -87,7 +87,22 @@ export class DbObjectStringField extends DbObjectField {
   public coerceType(value: FieldType): string {
     if (typeof value === "string") return value;
     if (value instanceof Id) return value.toString();
-    throw new Error("Value of an string must be a string");
+    throw new Error("Value of a string field must be a string");
+  }
+}
+
+export class DbObjectBooleanField extends DbObjectField {
+  public constructor(fieldName: string) {
+    super(fieldName);
+  }
+
+  public coerceType(value: FieldType): boolean {
+    if (typeof value === "boolean") return value;
+    if (typeof value === "string") {
+      if (value === "true") return true;
+      if (value === "false") return false;
+    }
+    throw new Error("Value of a boolean field must be a boolean");
   }
 }
 

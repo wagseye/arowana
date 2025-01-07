@@ -3,6 +3,7 @@ import {
   DbObject,
   DbObjectIdField,
   DbObjectStringField,
+  DbObjectBooleanField,
   DbObjectReferenceField,
   DbObjectIntegerField,
   DbObjectNumberField,
@@ -69,6 +70,9 @@ export default class DataObjectGenerator {
           break;
         case "integer":
           staticField = new DbObjectIntegerField(field.name);
+          break;
+        case "boolean":
+          staticField = new DbObjectBooleanField(field.name);
           break;
         case "number":
           staticField = new DbObjectNumberField(field.name);

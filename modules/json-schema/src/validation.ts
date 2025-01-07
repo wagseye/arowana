@@ -57,7 +57,15 @@ const fieldSchema = {
     db_name: { type: "string" },
     type: {
       type: "string",
-      enum: ["id", "string", "number", "integer", "date", "datetime"],
+      enum: [
+        "id",
+        "string",
+        "boolean",
+        "number",
+        "integer",
+        "date",
+        "datetime",
+      ],
     },
     required: { type: "boolean" },
   },

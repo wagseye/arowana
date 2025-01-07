@@ -3,6 +3,7 @@ import { DataObjectGenerator } from "json-schema";
 import {
   DbObject,
   DbObjectStringField,
+  DbObjectBooleanField,
   DbObjectIntegerField,
   DbObjectNumberField,
   DbObjectDateField,
@@ -25,6 +26,7 @@ const dbSchema =
             namespace: "public",
             fields: [
                 { name: "name", db_name: "name", type: "string", required: true, },
+                { name: "active", db_name: "is_active", type: "boolean", required: true, },
                 { name: "age", db_name: "age", type: "integer", required: true, },
                 { name: "amountPaid", db_name: "amount_paid", type: "number", required: true, },
                 { name: "organizationId", type: "reference", foreignObject: "baz", foreignLookupField: "id", foreignRelationName: "foos" },
@@ -109,7 +111,7 @@ describe("Organization", () => {
       });
 
       it("can be read", () => {
-        expect(org.createdAt).to.equal(now);
+        expect(org.createdAt).to.deep.equal(now);
       });
     });
   });
@@ -125,12 +127,16 @@ describe("User", () => {
       expect(User.name).to.equal("User");
     });
 
-    it("has exactly eight own properties", () => {
-      expect(props.length).to.equal(8);
+    it("has exactly nine own properties", () => {
+      expect(props.length).to.equal(9);
     });
 
     it("has a name property of type DbObjectStringField", () => {
       expect(User.Name).to.be.instanceOf(DbObjectStringField);
+    });
+
+    it("has an active property of type DbObjectBooleanField", () => {
+      expect(User.Active).to.be.instanceOf(DbObjectBooleanField);
     });
 
     it("has an age property of type DbObjectIntegerField", () => {
@@ -158,8 +164,8 @@ describe("User", () => {
       });
       const props = Object.getOwnPropertyNames(Object.getPrototypeOf(user));
 
-      it("has exactly seven own properties", () => {
-        expect(props.length).to.equal(7);
+      it("has exactly eight own properties", () => {
+        expect(props.length).to.equal(8);
       });
 
       it("has a constructor", () => {
@@ -178,6 +184,21 @@ describe("User", () => {
 
         it("can be read", () => {
           expect(user.name).to.equal("Joe");
+        });
+      });
+
+      describe("active property", () => {
+        it("exists", () => {
+          expect(props.includes("active")).to.be.true;
+        });
+
+        it("can be set", () => {
+          user.active = true;
+          //        expect((user.name = "Joe")).to.not.throw();
+        });
+
+        it("can be read", () => {
+          expect(user.active).to.be.true;
         });
       });
 
@@ -214,13 +235,13 @@ describe("User", () => {
           expect(props.includes("createdOn")).to.be.true;
         });
 
-        const now = new Date();
+        const date = new Date("2012-10-04");
         it("can be set", () => {
-          user.createdOn = now;
+          user.createdOn = date;
         });
 
         it("can be read", () => {
-          expect(user.createdOn).to.equal(now);
+          expect(user.createdOn).to.deep.equal(date);
         });
       });
 
@@ -235,28 +256,28 @@ describe("User", () => {
         });
 
         it("can be read", () => {
-          expect(user.modifiedAt).to.equal(now);
+          expect(user.modifiedAt).to.deep.equal(now);
         });
       });
     });
 
     describe('created with "new({properties})"', () => {
       describe("with some properties set", () => {
-        const now = Date.now();
+        const date = new Date(1349308800000);
         const user2 = new User({
           name: "Joe",
           amountPaid: 3.14,
-          createdOn: now,
+          createdOn: date,
         });
 
         it("is an instance of DbObject", () => {
           expect(user2).to.be.instanceOf(DbObject);
         });
 
-        it("has exactly seven own properties", () => {
+        it("has exactly eight own properties", () => {
           expect(
             Object.getOwnPropertyNames(Object.getPrototypeOf(user2)).length
-          ).to.equal(7);
+          ).to.equal(8);
         });
 
         it("has the name property set", () => {
@@ -269,7 +290,7 @@ describe("User", () => {
 
         it("has the createdOn property set", () => {
           // A little massaging due to timestamp/Date conversions
-          expect(user2.createdOn.getTime()).to.equal(now);
+          expect(user2.createdOn).to.deep.equal(date);
         });
 
         it("has the age property unset", () => {
@@ -300,10 +321,10 @@ describe("User", () => {
         expect(user2).to.be.instanceOf(DbObject);
       });
 
-      it("has exactly seven own properties", () => {
+      it("has exactly eight own properties", () => {
         expect(
           Object.getOwnPropertyNames(Object.getPrototypeOf(user2)).length
-        ).to.equal(7);
+        ).to.equal(8);
       });
 
       it("has a constructor", () => {
