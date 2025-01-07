@@ -15,7 +15,7 @@ The Id format is as follows:
   7 chars (78B) are uid
 */
 
-export default class Id extends String {
+export default class Id {
   #id: string;
 
   public static isId(val: string) {
@@ -24,10 +24,13 @@ export default class Id extends String {
   }
 
   constructor(id: string) {
-    super();
     if (!Id.isId(id)) throw new Error(`Invalid id: ${id}`);
 
     this.#id = id;
+  }
+
+  [Symbol.toPrimitive](hint) {
+    return this.toString();
   }
 
   public toString(): string {
