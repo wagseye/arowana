@@ -51,10 +51,12 @@ export default class DbObject {
     return Object.getPrototypeOf(this).constructor.class;
   }
 
-  static newInstance<T extends DbObject>(dbRec: object): T {
+  static newInstance<T extends DbObject>(dbRec: object = undefined): T {
     const proto: any = this.class;
     const newObj = new (proto.bind.apply(proto))();
-    newObj.#dbRecord = dbRec;
+    if (dbRec) {
+      newObj.#dbRecord = Object.freeze(dbRec);
+    }
     return newObj;
   }
 
