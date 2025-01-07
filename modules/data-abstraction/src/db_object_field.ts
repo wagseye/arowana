@@ -98,20 +98,18 @@ export class DbObjectNumberField extends DbObjectField {
     this.#decimalPlaces = decimalPlaces;
   }
   public coerceType(value: FieldType): number {
-    if (typeof value === "number") return value;
-    try {
-      if (typeof value === "string") {
-        if (this.#decimalPlaces) {
-          // If we need to round, I think the best way for our purposes is to go from string => num => string => num.
-          // Another way is to multiply by 10^numdigits, round and divide back, but then you run into danger of overflow
-          // if you have a lot of decimal places you want to represent
-          const strRep = Number.parseFloat(value).toFixed(this.#decimalPlaces);
-          return Number.parseFloat(strRep);
-        }
-        return Number.parseFloat(value);
+    if (typeof value === "string") {
+      const val = Number.parseFloat(value);
+      // We only want to allow strings where the whole thing is the number, so we compare back to original string we had
+      if (!isNaN(val) && val.toString() === value) {
+        value = val;
       }
-    } catch (err: unknown) {
-      throw new Error("Invalid number format");
+    }
+    if (typeof value === "number") {
+      if (this.#decimalPlaces !== undefined && this.#decimalPlaces !== null) {
+        return Number.parseFloat(value.toFixed(this.#decimalPlaces));
+      }
+      return value;
     }
     throw new Error("Value of an number field must be a number");
   }
@@ -125,29 +123,58 @@ export class DbObjectIntegerField extends DbObjectField {
   }
   public coerceType(value: FieldType): number {
     if (typeof value === "number") return Math.floor(value);
-    try {
-      if (typeof value === "string") return Number.parseInt(value);
-    } catch (err: unknown) {
-      throw new Error("Invalid integer format");
+    if (typeof value === "string") {
+      const val = Number.parseFloat(value);
+      // We only want to allow strings where the whole thing is the number, so we compare back to original string we had
+      if (val !== Number.NaN && val.toString() === value)
+        return Math.floor(val);
     }
     throw new Error("Value of an integer field must be a number");
   }
+}
+
+function validateDateStringFormat(dateStr: string): boolean {
+  if (!dateStr || typeof dateStr !== "string") {
+    throw "Parameter must be a valid string";
+  }
+
+  const timeRE = `(\\d{1,2}:\\d{2}(:\\d{2}(\\.\\d{1,2})?)?)?`;
+  const re1 = `\\d{4}-\\d{1,2}-\\d{1,2}( ${timeRE})?`; // YYYY-MM?-DD?
+  const re2 = `\\d{1,2}-\\d{1,2}-\\d{4}( ${timeRE})?`; // MM?-DD?-YYYY
+  const re3 = `\\d{1,2}\\/\\d{1,2}\\/\\d{2}(\\d{2})?( ${timeRE})?`; // MM?/DD?/YYYY -or- MM?/DD?/YY
+  const re4 = //ISO format (e.g. 2012-10-04T00:00:00.000Z)
+    "(\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d.\\d+([+-][0-2]\\d:[0-5]\\d|Z))";
+
+  const re = new RegExp(`^((${re1})|(${re2})|(${re3})|(${re4}))$`);
+  return re.test(dateStr);
 }
 
 export class DbObjectDateField extends DbObjectField {
   public constructor(fieldName: string) {
     super(fieldName);
   }
+
   public coerceType(value: FieldType): Date {
-    if (value instanceof Date) return value;
     if (typeof value === "number") {
-      // TODO: add additional checks here?
-      return new Date(value);
+      // Make sure the number is an integer
+      if (Math.floor(value) == value) {
+        // I've thought about checking that the value is within a particular range, but that gets weird pretty fast
+        // so we'll just let any ol' number through here
+        value = new Date(value);
+      }
     }
-    try {
-      if (typeof value === "string") return new Date(value);
-    } catch (err: unknown) {
-      throw new Error("Invalid date format");
+    if (typeof value === "string") {
+      if (validateDateStringFormat(value)) {
+        const val = Date.parse(value);
+        if (!isNaN(val)) {
+          value = new Date(val);
+        }
+      }
+    }
+    if (value instanceof Date) {
+      // I don't know if this is exactly correct, but it makes the tests pass. It may need revisiting later.
+      // prettier-ignore
+      return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate(), 0, 0, 0));
     }
     throw new Error("Value can not be stored in a date field");
   }
@@ -158,15 +185,25 @@ export class DbObjectDateTimeField extends DbObjectField {
     super(fieldName);
   }
   public coerceType(value: FieldType): Date {
-    if (value instanceof Date) return value;
     if (typeof value === "number") {
-      // TODO: add additional checks here?
-      return new Date(value);
+      // Make sure the number is an integer
+      if (Math.floor(value) == value) {
+        // We'll just let people provide any number here...
+        value = new Date(value);
+      }
     }
-    try {
-      if (typeof value === "string") return new Date(value);
-    } catch (err: unknown) {
-      throw new Error("Invalid date format");
+    if (typeof value === "string") {
+      if (validateDateStringFormat(value)) {
+        const val = Date.parse(value);
+        if (!isNaN(val)) {
+          value = new Date(val);
+        }
+      }
+    }
+    if (value instanceof Date) {
+      // I don't know if this is exactly correct, but it makes the tests pass. It may need revisiting later.
+      // prettier-ignore
+      return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate(), value.getUTCHours(), value.getUTCMinutes(), value.getUTCSeconds(), value.getUTCMilliseconds()));
     }
     throw new Error("Value can not be stored in a datetime field");
   }

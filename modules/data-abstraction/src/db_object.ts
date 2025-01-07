@@ -90,9 +90,11 @@ export default class DbObject {
         if (!(dbFieldObj.dbName in this.#dbRecord))
           throw new Error(`Field not retrieved from database: "${propName}"`);
         let strValue: string = this.#dbRecord[dbFieldObj.dbName];
-        if (strValue) {
-          value = dbFieldObj.coerceType(strValue);
-        }
+        value =
+          // The empty string is a permissible value, so we explicitly test against undefined/null here
+          strValue !== undefined && strValue !== null
+            ? dbFieldObj.coerceType(strValue)
+            : undefined;
         this.#cachedValues.set(dbFieldObj.dbName, value);
       }
     }
@@ -109,7 +111,12 @@ export default class DbObject {
 
     this.#cachedValues ||= new Map<string, FieldType>();
     const dbFieldObj = this.findDbFieldByName(propName);
-    const typedValue = dbFieldObj.coerceType(value);
+    if (!dbFieldObj) throw new Error(`Property not found: "${propName}"`);
+    const typedValue =
+      // The empty string is a permissible value, so we explicitly test against undefined/null here
+      value !== undefined && value !== null
+        ? dbFieldObj.coerceType(value)
+        : undefined;
     this.#cachedValues.set(dbFieldObj.dbName, typedValue);
 
     this.#dirtyKeys ||= new Set<string>();
@@ -127,14 +134,14 @@ export default class DbObject {
     // Copy over the underlying db record and mark all properties as "dirty"
     if (!opts["onlyChanges"]) {
       for (let propName in other.#dbRecord) {
-        this.#cachedValues[propName] = other.#dbRecord[propName];
+        this.#cachedValues.set(propName, other.#dbRecord[propName]);
         this.#dirtyKeys.add(propName);
       }
     }
 
     // Copy over the all "dirty" props on other and mark them as "dirty"
     for (let propName in other.#dirtyKeys) {
-      this.#cachedValues[propName] = other.#dbRecord[propName];
+      this.#cachedValues.set(propName, other.#dbRecord[propName]);
       this.#dirtyKeys.add(propName);
     }
   }
@@ -148,9 +155,9 @@ export default class DbObject {
       }
     }
     // Next copy over the values that have been explicitly set on the object, possibly overwriting some of the previous values
-    for (let propName in this.#dirtyKeys) {
-      obj[propName] = this.#dbRecord[propName];
-    }
+    this.#dirtyKeys.forEach((propName) => {
+      obj[propName] = this.#cachedValues.get(propName);
+    });
     return obj;
   }
 
@@ -205,11 +212,12 @@ export default class DbObject {
 
   // Shared fields
   get id(): Id {
-    return this.get(DbObject.id) as Id;
+    let id = this.get(DbObject.Id);
+    return id;
   }
 
   set id(value) {
-    this.set(DbObject.id, value);
+    this.set(DbObject.Id, value);
   }
 
   // Query-related methods
@@ -232,8 +240,6 @@ export default class DbObject {
     const q = new InsertQuery<T>(this.class);
     recsToInsert.forEach((rec) => {
       if (rec.id) throw "Records with id set can not be inserted";
-      if (rec.id) console.log("GFDSA: rec has id");
-      console.log(`Inserting a record, id=${rec.id}`);
       if (rec.class !== this)
         throw `Objects to insert must be of type ${this.name}`;
       const recUpdates: { [key: string]: any } = {};
