@@ -55,8 +55,7 @@ export abstract class Query<T extends DbObject> {
     dbRows = dbRows["rows"];
     const objs = [];
     for (const row of dbRows) {
-      // @ts-ignore
-      const newObj = this.#proto.newInstance(row);
+      const newObj = (this.#proto as typeof DbObject).newInstance(row);
       objs.push(newObj);
     }
     return objs;
