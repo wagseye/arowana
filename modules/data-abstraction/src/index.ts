@@ -10,6 +10,7 @@ import Database from "./database.js";
 import DbObjectField, {
   DbObjectIdField,
   DbObjectStringField,
+  DbObjectBooleanField,
   DbObjectNumberField,
   DbObjectIntegerField,
   DbObjectDateField,
@@ -23,6 +24,7 @@ export {
   DbObject,
   DbObjectIdField,
   DbObjectStringField,
+  DbObjectBooleanField,
   DbObjectNumberField,
   DbObjectIntegerField,
   DbObjectDateField,
