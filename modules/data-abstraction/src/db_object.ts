@@ -29,8 +29,11 @@ export default class DbObject {
   static #propsByName: Map<string, Map<string, DbObjectField>> = new Map();
   static #propsByDbName: Map<string, Map<string, DbObjectField>> = new Map();
 
-  #dbRecord: object | undefined;
-  #cachedValues: Map<string, FieldType> | undefined;
+  // #dbRecord is only present if this record was retrieved by the database (or copied from another record that was)
+  #dbRecord: { [key: string]: FieldType | undefined } | undefined;
+  // #cachedValues is instantiated because any time an object is used (i.e. a field is read) it will be needed
+  #cachedValues: Map<string, FieldType> = new Map();
+  // #dirtyKeys are not instantiated because it is only needed when an object is updated, which should be the unusual case
   #dirtyKeys: Set<string> | undefined;
 
   constructor(props: { [key: string]: any } | undefined = undefined) {
