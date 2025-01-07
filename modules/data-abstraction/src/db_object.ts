@@ -259,14 +259,31 @@ export default class DbObject {
     }
   }
 
-  static async update<T extends DbObject>(recs: T | T[]): Promise<T[]> {
-    const recsArr = Array.isArray(recs) ? recs : [recs];
+  static async update<T extends DbObject>(...recs: (T | T[])[]): Promise<void> {
+    if (!recs || !recs.length) {
+      throw new Error("No records provided to insert");
+    }
+    const recsToUpdate = recs.flat();
     const q = new UpdateQuery<T>(this.class);
-    recsArr.forEach((rec) => q.addRecord(rec, rec.#dirtyKeys));
+    recsToUpdate.forEach((rec) => {
+      if (!rec.id) throw "Records without id set can not be updated";
+      if (rec.class !== this)
+        throw `Objects to update must be of type ${this.name}`;
+      const recUpdates: { [key: string]: any } = {};
+      for (const propName of rec.#dirtyKeys) {
+        recUpdates[propName] = rec.#cachedValues.get(propName);
+      }
+      q.addRecord(rec, recUpdates);
+    });
 
     const updatedRecs: T[] = await q.execute();
-    recsArr.forEach((rec) => rec.#dirtyKeys.clear());
-    return updatedRecs;
+    for (let i = 0; i < recsToUpdate.length; i++) {
+      let oldRec = recsToUpdate[i];
+      let newRec = updatedRecs[i];
+      oldRec.#dbRecord = newRec.#dbRecord;
+      oldRec.#cachedValues.clear();
+      oldRec.#dirtyKeys.clear();
+    }
   }
 
   // Potential future methods
