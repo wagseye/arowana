@@ -127,7 +127,7 @@ export default class DbObject {
   }
 
   // TODO: add opts field to Typescript
-  public copy(other: DbObject, opts: object | undefined): void {
+  public copy(other: DbObject, opts: object | undefined = undefined): void {
     if (!other) throw "No record to copy";
     if (!(other instanceof DbObject))
       throw "Record to copy must be of a type that inherits DbObject";
