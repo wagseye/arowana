@@ -76,11 +76,9 @@ export abstract class Query<T extends DbObject> {
   private static async loadDatabase() {
     try {
       // The module name is defined separately from the import to avoid tsc compilation errors
-      console.log("Attempting to load database module");
       const module_name = "database-connector";
       const t: Timer = new Timer().start();
       const { default: Database } = await import(module_name);
-      console.log(`Loaded module in ${t.stop().elapsedTime()}`);
       this.#database = new Database();
     } catch (ex: unknown) {
       if (ex instanceof Error) {
