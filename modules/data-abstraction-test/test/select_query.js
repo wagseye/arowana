@@ -6,7 +6,7 @@ const dbSchema =
   {
       name: "User",
       db_name: "users",
-      namespace: "public",
+      test_scope: "selectquery",
       fields: [
           { name: "firstName", db_name: "first_name", type: "string", required: true, },
           { name: "lastName", db_name: "last_name", type: "string", required: true, },
