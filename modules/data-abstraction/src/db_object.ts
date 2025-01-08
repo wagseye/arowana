@@ -5,7 +5,7 @@ import DbObjectField, {
   DbObjectIdField,
   FieldType,
 } from "./db_object_field.js";
-import { SelectQuery, InsertQuery, UpdateQuery } from "./query.js";
+import { SelectQuery, InsertQuery, UpdateQuery, DeleteQuery } from "./query.js";
 import { dbField } from "./db_decorators.js";
 
 export interface PrototypeType<T> extends Function {
@@ -267,6 +267,8 @@ export default class DbObject {
     });
 
     const insertedRecs: T[] = await q.execute();
+    if (recsToInsert.length !== insertedRecs.length)
+      throw `Insert error: inserted ${recsToInsert.length} records but received ${insertedRecs.length} records back`;
     for (let i = 0; i < recsToInsert.length; i++) {
       let oldRec = recsToInsert[i];
       let newRec = insertedRecs[i];
@@ -278,14 +280,18 @@ export default class DbObject {
 
   static async update<T extends DbObject>(...recs: (T | T[])[]): Promise<void> {
     if (!recs || !recs.length) {
-      throw new Error("No records provided to insert");
+      throw new Error("No records provided to update");
     }
     const recsToUpdate = recs.flat();
     const q = new UpdateQuery<T>(this.class);
+    const setIds = new Set<string>();
     recsToUpdate.forEach((rec) => {
       if (!rec.id) throw "Records without id set can not be updated";
       if (rec.class !== this)
         throw `Objects to update must be of type ${this.name}`;
+      if (setIds.has(rec.id.toString()))
+        throw `Records to update includes record with id ${rec.id} multiple times`;
+      setIds.add(rec.id.toString());
       const recUpdates: { [key: string]: any } = {};
       for (const propName of rec.#dirtyKeys) {
         recUpdates[propName] = rec.#cachedValues.get(propName);
@@ -294,6 +300,8 @@ export default class DbObject {
     });
 
     const updatedRecs: T[] = await q.execute();
+    if (recsToUpdate.length !== updatedRecs.length)
+      throw `Update error: updated ${recsToUpdate.length} records but received ${updatedRecs.length} records back`;
     for (let i = 0; i < recsToUpdate.length; i++) {
       let oldRec = recsToUpdate[i];
       let newRec = updatedRecs[i];
@@ -303,9 +311,25 @@ export default class DbObject {
     }
   }
 
-  // Potential future methods
-  /*
-  static load(field: DbObjectReferenceField): DbObject? {
-    return undefined;
-  } */
+  static async delete<T extends DbObject>(...recs: (T | T[])[]): Promise<void> {
+    if (!recs || !recs.length) {
+      throw new Error("No records provided to delete");
+    }
+    const recsToDelete = recs.flat();
+    const q = new DeleteQuery<T>(this.class);
+    const setIds = new Set<string>();
+    recsToDelete.forEach((rec) => {
+      if (!rec.id) throw "Records without id set can not be deleted";
+      if (rec.class !== this)
+        throw `Objects to delete must be of type ${this.name}`;
+      if (setIds.has(rec.id.toString()))
+        throw `Records to delete includes record with id ${rec.id} multiple times`;
+      q.addRecord(rec);
+      setIds.add(rec.id.toString());
+    });
+
+    const deletedRecs: T[] = await q.execute();
+    if (recsToDelete.length !== deletedRecs.length)
+      throw `Insert error: inserted ${recsToDelete.length} records but received ${deletedRecs.length} records back`;
+  }
 }
