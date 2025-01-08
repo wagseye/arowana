@@ -264,6 +264,28 @@ export class UpdateQuery<T extends DbObject> extends Query<T> {
 
 export class DeleteQuery<T extends DbObject> extends Query<T> {
   #queryObject = {};
+
+  constructor(proto: Object) {
+    super(proto);
+
+    this.#queryObject["type"] = "delete";
+    this.#queryObject["table"] = proto["tableName"]();
+    this.#queryObject["records"] = [];
+  }
+
+  public addRecord(rec: DbObject) {
+    if (!rec) throw new Error("No record provided");
+
+    const recordJson = {
+      where: { left: "id", operator: "=", right: rec.id.toString() },
+    };
+    this.#queryObject["records"].push(recordJson);
+  }
+
+  public async execute(): Promise<T[]> {
+    return await this.queryObjects();
+  }
+
   public toJSON() {
     return this.#queryObject;
   }
