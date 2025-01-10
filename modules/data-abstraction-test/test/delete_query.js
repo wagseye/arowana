@@ -123,4 +123,22 @@ describe("Delete Query", () => {
       });
     });
   });
+
+  describe("invalid database response", async () => {
+    // Sinon setup
+    let dbStub;
+    beforeEach(function () {
+      // prettier-ignore
+      dbStub = sinon.stub(db.__proto__, "query").returns({});
+    });
+    afterEach(function () {
+      dbStub.restore();
+    });
+
+    describe("an empty response", () => {
+      it("should fail gracefully", async () => {
+        await expect(User.delete(user1.clone())).to.be.eventually.rejected;
+      });
+    });
+  });
 });
