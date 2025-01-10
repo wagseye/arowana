@@ -50,9 +50,12 @@ export abstract class Query<T extends DbObject> {
   public abstract toJSON();
 
   protected async queryObjects(): Promise<T[]> {
-    let dbRows: { [index: string]: any }[] = await Query.execute(this.toJSON());
-
-    dbRows = dbRows["rows"];
+    const resp: { [index: string]: any } = await Query.execute(this.toJSON());
+    if (!("rows" in resp))
+      throw 'Database results do not contain a "rows" element';
+    const dbRows = resp["rows"];
+    if (!Array.isArray(dbRows))
+      throw '"Row" element of list is expected to be a list';
     const objs = [];
     for (const row of dbRows) {
       const newObj = (this.#proto as typeof DbObject).newInstance(row);
@@ -61,16 +64,15 @@ export abstract class Query<T extends DbObject> {
     return objs;
   }
 
-  protected static async execute(
-    q: object
-  ): Promise<{ [index: string]: any }[]> {
+  protected static async execute(q: object): Promise<{ [index: string]: any }> {
     if (!this.#database) {
       await this.loadDatabase();
     }
     const t = new Timer().start();
-    const dbRows: { [index: string]: any }[] = await Query.#database!.query(q);
+    const resp: { [index: string]: any }[] = await Query.#database!.query(q);
+    if (!resp) throw "Query response is empty";
 
-    return dbRows;
+    return resp;
   }
 
   private static async loadDatabase() {
@@ -185,7 +187,7 @@ export class SelectQuery<T extends DbObject> extends Query<T> {
   async count(): Promise<number> {
     const queryCopy = JSON.parse(JSON.stringify(this.#queryObject));
     queryCopy["fields"] = "COUNT(*)";
-    let res: { [index: string]: any }[] = await Query.execute(queryCopy);
+    let res: { [index: string]: any } = await Query.execute(queryCopy);
     if (!res || !res.length || !res[0] || !("count" in res[0])) {
       throw new Error("Unknown error while counting records");
     }
