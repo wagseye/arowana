@@ -1,0 +1,22 @@
+{
+  "name": "aws-info",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": "./dist/index.js",
+  "scripts": {
+    "prebuild": "npm install",
+    "build": "npx tsc",
+    "test": "npx mocha"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "chai": "^5.1.2",
+    "mocha": "^11.0.1",
+    "ts-node": "^10.9.2"
+  },
+  "dependencies": {
+    "@aws-sdk/client-ec2": "^3.726.1",
+    "@aws-sdk/client-secrets-manager": "^3.726.1"
+  }
+}
