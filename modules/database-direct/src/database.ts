@@ -1,14 +1,18 @@
-import pkg from 'pg';
+import pkg from "pg";
 const { Client } = pkg;
 
 import Transaction, { BasicTransaction } from "./transaction.js";
-import { SelectQueryFormatter, InsertQueryFormatter, UpdateQueryFormatter, DeleteQueryFormatter } from "./query_formatter.js";
+import {
+  SelectQueryFormatter,
+  InsertQueryFormatter,
+  UpdateQueryFormatter,
+  DeleteQueryFormatter,
+} from "./query_formatter.js";
 
 import {
   GetSecretValueCommand,
   SecretsManagerClient,
 } from "@aws-sdk/client-secrets-manager";
-
 
 export class DatabaseConfig {
   public organizationId: string;
@@ -22,22 +26,32 @@ export default class DatabaseConnector {
   static #orgId;
   static #namespace;
 
-  public async init(config: DatabaseConfig) {
-    if (!config || !(config instanceof DatabaseConfig)) throw new Error('Invalid configuration object');
-    if (!config.organizationId) throw new Error('');
+  public async init(config: DatabaseConfig): Promise<void> {
+    if (!config || !(config instanceof DatabaseConfig))
+      throw new Error("Invalid configuration object");
+    if (!config.organizationId) throw new Error("");
     if (DatabaseConnector.#orgId !== config.organizationId) {
-      let res = await DatabaseConnector.runQuery('SELECT table_schema FROM organizations WHERE id=%', config.organizationId);
-      if (res.length == 0) throw new Error(`Did not find organization with id="${config.organizationId}"`);
-      if (res.length != 1) throw new Error(`Found ${res.length} organizations with id="${config.organizationId}"`);
+      let res = await DatabaseConnector.runQuery(
+        "SELECT table_schema FROM organizations WHERE id=%",
+        config.organizationId
+      );
+      if (res.length == 0)
+        throw new Error(
+          `Did not find organization with id="${config.organizationId}"`
+        );
+      if (res.length != 1)
+        throw new Error(
+          `Found ${res.length} organizations with id="${config.organizationId}"`
+        );
       DatabaseConnector.#orgId = config.organizationId;
       DatabaseConnector.#namespace = res["rows"][0]["table_schema"];
     }
   }
 
   public static set connection(value: any) {
-    console.log('Setting database connection manually');
+    console.log("Setting database connection manually");
     if (this.#connection && this.#createdConnection) {
-      console.log('Found existing connection, ending it');
+      console.log("Found existing connection, ending it");
       this.#connection.end();
     }
     this.#connection = value;
@@ -45,7 +59,10 @@ export default class DatabaseConnector {
   }
 
   public static set transactionType(value: any) {
-    if (this.#transaction && this.#transaction.isOpen()) throw new Error('Transaction type can not be set when there is already an open transaction');
+    if (this.#transaction && this.#transaction.isOpen())
+      throw new Error(
+        "Transaction type can not be set when there is already an open transaction"
+      );
     if (this.#transactionType !== value) {
       console.log(`Setting transaction type to ${value.name}`);
       this.#transaction = undefined;
@@ -54,36 +71,48 @@ export default class DatabaseConnector {
   }
 
   public static async query(q: object): Promise<object[]> {
-    let sql;
+    let sqls;
     switch (q["type"]) {
       case "select":
-        sql = new SelectQueryFormatter(q, this.#namespace).toSql();
+        sqls = new SelectQueryFormatter(q, this.#namespace).toSql();
         break;
       case "insert":
-        sql = new InsertQueryFormatter(q, this.#namespace).toSql();
+        sqls = new InsertQueryFormatter(q, this.#namespace).toSql();
         break;
       case "update":
-        sql = new UpdateQueryFormatter(q, this.#namespace).toSql();
+        sqls = new UpdateQueryFormatter(q, this.#namespace).toSql();
         break;
       case "delete":
-        sql = new DeleteQueryFormatter(q, this.#namespace).toSql();
+        sqls = new DeleteQueryFormatter(q, this.#namespace).toSql();
         break;
       default:
         throw new Error(`Invalid query type: "${q["type"]}"`);
     }
-    return this.runQuery(sql);
+    if (!(sqls instanceof Array)) sqls = [sqls];
+    let objs = [];
+    for (const sql of sqls) {
+      const res = await this.runQuery(sql);
+      objs.push(...res);
+    }
+    return objs;
   }
 
   // runQuery() is a wrapper function that runs the specified query and returns only the records (as opposed to the rest of the metadata from the db)
-  public static async runQuery(sql: string, args = undefined) {
+  public static async runQuery(
+    sql: string,
+    args = undefined
+  ): Promise<object[]> {
     const res = await this.runSql(sql, args);
     const rows = res["rows"];
     if (!rows) throw new Error('Query result does not have a "rows" element');
     this.logQueryResult(rows);
     return rows;
   }
-  
-  public static async runSql(sql: string, args = undefined) {
+
+  public static async runSql(
+    sql: string,
+    args = undefined
+  ): Promise<object | undefined> {
     try {
       await this.connect();
 
@@ -127,22 +156,38 @@ export default class DatabaseConnector {
 
   private static get transaction(): Transaction | undefined {
     if (!this.#transaction) {
-      if (!this.#transactionType) throw new Error('Transactions have been disabled for this database connection');
-      this.#transaction = new this.#transactionType;
+      if (!this.#transactionType)
+        throw new Error(
+          "Transactions have been disabled for this database connection"
+        );
+      this.#transaction = new this.#transactionType();
     }
     return this.#transaction;
   }
   private static async connect() {
     const dbSecretName = process.env.DB_SECRET_NAME;
-    if (!dbSecretName) throw new Error('Unable to retrieve the name of the database credentials');
-    let secret: {[key:string]:string} = await getSecretValue(dbSecretName);
+    if (!dbSecretName)
+      throw new Error(
+        "Unable to retrieve the name of the database credentials"
+      );
+    let secret: { [key: string]: string } = await getSecretValue(dbSecretName);
 
-    if (!('host' in secret) || !secret['host']) throw new Error('Database credentials must contain a "host" value');
-    if (!('port' in secret) || !secret['port']) throw new Error('Database credentials must contain a "port" value');
-    if (!('database_name' in secret) || !secret['database_name']) throw new Error('Database credentials must contain a "database_name" value');
-    if (!('username' in secret) || !secret['username']) throw new Error('Database credentials must contain a "username" value');
-    if (!('password' in secret) || !secret['password']) throw new Error('Database credentials must contain a "password" value');
-    if (!('certificate' in secret) || !secret['certificate']) throw new Error('Database credentials must contain a "certificate" value');
+    if (!("host" in secret) || !secret["host"])
+      throw new Error('Database credentials must contain a "host" value');
+    if (!("port" in secret) || !secret["port"])
+      throw new Error('Database credentials must contain a "port" value');
+    if (!("database_name" in secret) || !secret["database_name"])
+      throw new Error(
+        'Database credentials must contain a "database_name" value'
+      );
+    if (!("username" in secret) || !secret["username"])
+      throw new Error('Database credentials must contain a "username" value');
+    if (!("password" in secret) || !secret["password"])
+      throw new Error('Database credentials must contain a "password" value');
+    if (!("certificate" in secret) || !secret["certificate"])
+      throw new Error(
+        'Database credentials must contain a "certificate" value'
+      );
 
     const pgClient = new Client({
       host: getDatabaseCredential("host", secret),
@@ -154,31 +199,31 @@ export default class DatabaseConnector {
         rejectUnauthorized: false,
         ca: getDatabaseCredential("certificate", secret),
       },
-    });    
+    });
     try {
       await pgClient.connect();
       this.#connection = pgClient;
       this.#createdConnection = true;
-      console.info('Succesfully connected to database');
+      console.info("Succesfully connected to database");
     } catch (err) {
       console.error(`Error connecting to database: ${err.message}`);
-      return undefined;
     }
   }
 
   private static logQueryResult(rows: object[]): void {
     const MAX_ROWS = 5;
-    if (rows.length > MAX_ROWS) {
-      console.log(
-        `Query returned ${rows.length} rows: ${JSON.stringify(
-          rows.slice(0, MAX_ROWS)
-        )} [+ ${rows.length - MAX_ROWS} more]`
-      );
-    } else {
-      console.log(
-        `Query returned ${rows.length} rows: ${JSON.stringify(rows)}`
-      );
-    }
+    // This has been commented out until we come up with a better logging situation
+    // if (rows.length > MAX_ROWS) {
+    //   console.log(
+    //     `Query returned ${rows.length} rows: ${JSON.stringify(
+    //       rows.slice(0, MAX_ROWS)
+    //     )} [+ ${rows.length - MAX_ROWS} more]`
+    //   );
+    // } else {
+    //   console.log(
+    //     `Query returned ${rows.length} rows: ${JSON.stringify(rows)}`
+    //   );
+    // }
   }
 }
 
@@ -217,12 +262,14 @@ function getDatabaseCredential(
   return value;
 }
 
-async function getSecretValue(secretName: string): Promise<{[key:string]:string}> {
+async function getSecretValue(
+  secretName: string
+): Promise<{ [key: string]: string }> {
   const client = new SecretsManagerClient();
   const response = await client.send(
     new GetSecretValueCommand({
       SecretId: secretName,
-    }),
+    })
   );
   return JSON.parse(response.SecretString);
-};
+}

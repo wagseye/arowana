@@ -1,0 +1,29 @@
+{
+  "name": "database-connector",
+  "version": "1.0.0",
+  "exports": "./dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "npx tsc",
+    "test": "npx mocha"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.588.0",
+    "dotenv": "^16.4.5",
+    "pg": "^8.11.4",
+    "pg-format": "^1.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "@types/pg": "^8.11.4",
+    "chai": "^5.1.2",
+    "mocha": "^11.0.1",
+    "sinon": "^19.0.2",
+    "sinon-chai": "^4.0.0",
+    "ts-node": "^10.9.2"
+  },
+  "keywords": [],
+  "description": ""
+}
