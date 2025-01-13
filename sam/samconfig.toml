@@ -1,4 +1,11 @@
 version = 0.1
+
+[default]
+[default.build]
+[default.build.parameters]
+build_in_source = true
+
+[default.deploy]
 [default.deploy.parameters]
 stack_name = "arowana"
 resolve_s3 = true
