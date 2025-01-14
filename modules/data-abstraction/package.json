@@ -5,7 +5,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "(npm list install-local || npm install --no-save install-local) && npx install-local && npx tsc",
+    "prebuild": "((npm list install-local>/dev/null) || (npm install --no-save install-local>/dev/null)) && npx install-local",
+    "build": "npx tsc",
     "test": "cd ../data-abstraction-test/ && npm run build && npx mocha",
     "build/test": "npm run build && npm run test"
   },
