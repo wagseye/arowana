@@ -1,0 +1,20 @@
+{
+  "name": "web-tokens",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": "./dist/index.js",
+  "scripts": {
+    "prebuild": "((npm list install-local>/dev/null) || (npm install --no-save install-local>/dev/null)) && npx install-local",
+    "build": "npx tsc"
+  },
+  "devDependencies": {
+    "install-local": "^3.0.1",
+    "ts-node": "^10.9.2"
+  },
+  "localDependencies": {
+    "aws-info": "../aws-info"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2"
+  }
+}
