@@ -6,7 +6,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "(npm list install-local || npm install --no-save install-local) && npx install-local"
+    "prebuild": "((npm list install-local>/dev/null) || (npm install --no-save install-local>/dev/null))",
+    "build": "npx install-local"
   },
   "keywords": [],
   "author": "",
