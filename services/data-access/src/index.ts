@@ -7,7 +7,7 @@ import DatabaseConnector from "./database";
 import QueryFormatter from "./query_formatter";
 import OrganizationSchema from "./org_schema";
 
-app.get("/select", async (req, res) => {
+app.post("/select", async (req, res) => {
   try {
     console.log(`Request: ${JSON.stringify(req.body)}`);
     const json = req.body;
@@ -53,7 +53,7 @@ app.post("/insert", async (req, res) => {
   }
 });
 
-app.patch("/update", async (req, res) => {
+app.post("/update", async (req, res) => {
   try {
     console.log(`Request: ${JSON.stringify(req.body)}`);
     const json = req.body;
@@ -76,7 +76,7 @@ app.patch("/update", async (req, res) => {
   }
 });
 
-app.delete("/delete", async (req, res) => {
+app.post("/delete", async (req, res) => {
   try {
     console.log(`Request: ${JSON.stringify(req.body)}`);
     const json = req.body;
