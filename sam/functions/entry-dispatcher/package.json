@@ -1,0 +1,21 @@
+{
+  "name": "entry-dispatcher",
+  "version": "1.0.0",
+  "exports": "./dist/index.js",
+  "type": "module",
+  "scripts": {
+    "prebuild": "((npm list install-local>/dev/null) || (npm install --no-save install-local>/dev/null)) && npx install-local",
+    "build": "npx tsc"
+  },
+  "devDependencies": {
+    "install-local": "^3.0.1",
+    "ts-node": "^10.9.2"
+  },
+  "localDependencies": {
+    "aws-info": "../../../modules/aws-info",
+    "web-tokens": "../../../modules/web-tokens"
+  },
+  "dependencies": {
+    "@aws-sdk/client-lambda": "^3.726.1"
+  }
+}
