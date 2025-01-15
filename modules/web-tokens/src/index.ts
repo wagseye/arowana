@@ -7,7 +7,6 @@ export async function createWebToken(
   payload: object,
   secondsToLive: number = 120
 ): Promise<string | undefined> {
-  console.log("Creating web token");
   const key = await getSecret();
   const token = jwt.sign(payload, key, {
     expiresIn: `${secondsToLive.toString()}s`,
