@@ -151,6 +151,7 @@ export default abstract class QueryFormatter {
   }
 
   private formatFiltersRecursive(condition: object): string {
+    if (!condition) return undefined;
     const elements: string[] = [];
 
     // Analyze each element individually. If we're down to just strings, we need to make sure "left" is a valid field and
