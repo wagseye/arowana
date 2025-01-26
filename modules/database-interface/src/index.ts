@@ -14,7 +14,7 @@ export type QueryResponse = {
 }[];
 
 export default interface DatabaseInterface {
-  query(query: object): Promise<QueryResponse>;
+  query(query: Query): Promise<QueryResponse>;
 }
 
 export interface TrustedDatabaseInterface extends DatabaseInterface {
@@ -26,6 +26,13 @@ export interface TrustedDatabaseInterface extends DatabaseInterface {
     sql: string,
     args: DatabasePrimitive | DatabasePrimitive[]
   ): QueryResponse;
+}
+
+export interface UntrustedDatabaseInterface extends DatabaseInterface {
+  set organizationId(string);
+  set databaseToken(string);
+  set databaseAddress(string);
+  get transactionId(): string;
 }
 
 export interface TestDatabaseInterface extends DatabaseInterface {
