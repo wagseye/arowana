@@ -4,7 +4,7 @@ import { Test } from "testing";
 
 export default class TestUsers {
   static async testDefaultUser() {
-    const rows = await Database.runSql(
+    const rows = await Database.runQuery(
       "SELECT username, email FROM users WHERE username='admin'"
     );
     Test.assertEquals(1, rows.length);

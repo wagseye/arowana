@@ -3,10 +3,10 @@ import { Test } from "testing";
 
 export default class TestInsertExistingObjectFields {
   static async testOrganizationFields() {
-    let res1 = await Database.runSql(
+    let res1 = await Database.runQuery(
       `SELECT column_name, data_type FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='organizations'`
     );
-    let res2 = await Database.runSql(
+    let res2 = await Database.runQuery(
       `SELECT of.name, of.type FROM object_fields of
       INNER JOIN objects o ON of.object_id=o.id
       AND o.table_schema='public' AND o.table_name='organizations'`
@@ -29,10 +29,10 @@ export default class TestInsertExistingObjectFields {
   }
 
   static async testUserFields() {
-    let res1 = await Database.runSql(
+    let res1 = await Database.runQuery(
       `SELECT column_name, data_type FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='users'`
     );
-    let res2 = await Database.runSql(
+    let res2 = await Database.runQuery(
       `SELECT of.name, of.type FROM object_fields of
       INNER JOIN objects o ON of.object_id=o.id
       AND o.table_schema='public' AND o.table_name='users'`
@@ -55,10 +55,10 @@ export default class TestInsertExistingObjectFields {
   }
 
   static async testObjectFields() {
-    let res1 = await Database.runSql(
+    let res1 = await Database.runQuery(
       `SELECT column_name, data_type FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='objects'`
     );
-    let res2 = await Database.runSql(
+    let res2 = await Database.runQuery(
       `SELECT of.name, of.type FROM object_fields of
       INNER JOIN objects o ON of.object_id=o.id
       AND o.table_schema='public' AND o.table_name='objects'`
@@ -91,10 +91,10 @@ export default class TestInsertExistingObjectFields {
   }
 
   static async testObjectFieldsFields() {
-    let res1 = await Database.runSql(
+    let res1 = await Database.runQuery(
       `SELECT column_name, data_type FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='object_fields'`
     );
-    let res2 = await Database.runSql(
+    let res2 = await Database.runQuery(
       `SELECT of.name, of.type FROM object_fields of
       INNER JOIN objects o ON of.object_id=o.id
       AND o.table_schema='public' AND o.table_name='object_fields'`
