@@ -1,6 +1,6 @@
 
 build-DbMigrate:
-	npm install;
+	npm install
 	mkdir -p $(ARTIFACTS_DIR)
 	npx esbuild src/**/*.ts \
 		--platform=node \
