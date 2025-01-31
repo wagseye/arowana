@@ -1,0 +1,15 @@
+{
+  "name": "testing",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {},
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "install-local": "^3.0.1"
+  },
+  "localDependencies": {
+    "testing": "../../../modules/testing"
+  }
+}
