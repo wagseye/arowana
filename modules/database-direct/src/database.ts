@@ -13,7 +13,6 @@ import {
   GetSecretValueCommand,
   SecretsManagerClient,
 } from "@aws-sdk/client-secrets-manager";
-
 export class DatabaseConfig {
   public organizationId: string;
 }
@@ -113,33 +112,22 @@ export default class DatabaseConnector {
     sql: string,
     args = undefined
   ): Promise<object | undefined> {
-    try {
-      await this.connect();
+    await this.connect();
 
-      console.log("About to execute query: " + sql);
-      let res;
-      if (args) {
-        res = await this.#connection.query(
-          sql,
-          args instanceof Array ? args : [args]
-        );
-      } else {
-        res = await this.#connection.query(sql);
-      }
-      if (!res) {
-        console.log(`Query did not return any results: ${JSON.stringify(res)}`);
-      }
-      return res;
-    } catch (err) {
-      if (err instanceof Error) {
-        console.log(
-          `Caught error querying database: ${err.message}\n${err.stack}`
-        );
-      } else {
-        console.log(`Caught error querying database: ${err}`);
-      }
+    console.log("About to execute query: " + sql);
+    let res;
+    if (args) {
+      res = await this.#connection.query(
+        sql,
+        args instanceof Array ? args : [args]
+      );
+    } else {
+      res = await this.#connection.query(sql);
     }
-    return undefined;
+    if (!res) {
+      console.log(`Query did not return any results: ${JSON.stringify(res)}`);
+    }
+    return res;
   }
 
   public static async startTransaction(): Promise<void> {
