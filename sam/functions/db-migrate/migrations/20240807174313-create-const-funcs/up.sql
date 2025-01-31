@@ -77,7 +77,7 @@ CREATE FUNCTION public.const_id_uid_len()
  LANGUAGE sql
  IMMUTABLE PARALLEL SAFE
 AS $function$
-    SELECT 7;
+    SELECT 8;
 $function$;
 
 CREATE FUNCTION public.const_uid_increment()
@@ -85,13 +85,15 @@ CREATE FUNCTION public.const_uid_increment()
  LANGUAGE sql
  IMMUTABLE PARALLEL SAFE
 AS $function$
-    SELECT 2222222033;
+    SELECT 222222222007;
 $function$;
 
+-- I had to use this website to find a large prime close to 36^8. This number is only 19 shy of the max!
+-- https://www.numberempire.com/primenumbers.php
 CREATE FUNCTION public.const_uid_max()
  RETURNS bigint
  LANGUAGE sql
  IMMUTABLE PARALLEL SAFE
 AS $function$
-    SELECT 78364164096;
+    SELECT 2821109907437;
 $function$;
