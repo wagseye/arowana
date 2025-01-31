@@ -12,16 +12,18 @@ CREATE OR REPLACE FUNCTION public.populate_org_key_and_schema()
  LANGUAGE plpgsql
 AS $function$
 DECLARE
-    next_key bigint;
     new_schema text;
+    key_seq    bigint;
+    key_next   bigint;
+    key_incr   bigint;
 BEGIN
     IF NEW.id_key IS NULL OR NEW.id_key='' THEN
-        UPDATE object_sequences _new SET next=(_new.next + 1)
-            FROM object_sequences _old
-            WHERE _old.organization_key IS NULL and _old.object_prefix IS NULL
-              AND _new.organization_key IS NULL and _new.object_prefix IS NULL
-            RETURNING _old.next INTO next_key;
-        NEW.id_key := base36_encode(next_key, const_id_org_key_len());
+        SELECT sequence_number, next, increment INTO key_seq, key_next, key_incr FROM object_sequences
+            WHERE organization_key IS NULL AND object_prefix IS NULL
+            FOR UPDATE;
+        UPDATE object_sequences SET sequence_number=(key_seq + 1), next=(key_next + key_incr)
+            WHERE organization_key IS NULL AND object_prefix IS NULL;
+        NEW.id_key := base36_encode(key_next, const_id_org_key_len());
     END IF;
     IF NEW.table_schema IS NULL OR NEW.table_schema='' THEN
         new_schema := get_org_schema_name(NEW.id_key);
