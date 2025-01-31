@@ -165,48 +165,52 @@ export default class DatabaseConnector {
     return this.#transaction;
   }
   private static async connect() {
-    const dbSecretName = process.env.DB_SECRET_NAME;
-    if (!dbSecretName)
-      throw new Error(
-        "Unable to retrieve the name of the database credentials"
-      );
-    let secret: { [key: string]: string } = await getSecretValue(dbSecretName);
-
-    if (!("host" in secret) || !secret["host"])
-      throw new Error('Database credentials must contain a "host" value');
-    if (!("port" in secret) || !secret["port"])
-      throw new Error('Database credentials must contain a "port" value');
-    if (!("database_name" in secret) || !secret["database_name"])
-      throw new Error(
-        'Database credentials must contain a "database_name" value'
-      );
-    if (!("username" in secret) || !secret["username"])
-      throw new Error('Database credentials must contain a "username" value');
-    if (!("password" in secret) || !secret["password"])
-      throw new Error('Database credentials must contain a "password" value');
-    if (!("certificate" in secret) || !secret["certificate"])
-      throw new Error(
-        'Database credentials must contain a "certificate" value'
+    if (!this.#connection) {
+      const dbSecretName = process.env.DB_SECRET_NAME;
+      if (!dbSecretName)
+        throw new Error(
+          "Unable to retrieve the name of the database credentials"
+        );
+      let secret: { [key: string]: string } = await getSecretValue(
+        dbSecretName
       );
 
-    const pgClient = new Client({
-      host: getDatabaseCredential("host", secret),
-      port: parseInt(getDatabaseCredential("port", secret)),
-      database: getDatabaseCredential("database_name", secret),
-      user: getDatabaseCredential("username", secret),
-      password: getDatabaseCredential("password", secret),
-      ssl: {
-        rejectUnauthorized: false,
-        ca: getDatabaseCredential("certificate", secret),
-      },
-    });
-    try {
-      await pgClient.connect();
-      this.#connection = pgClient;
-      this.#createdConnection = true;
-      console.info("Succesfully connected to database");
-    } catch (err) {
-      console.error(`Error connecting to database: ${err.message}`);
+      if (!("host" in secret) || !secret["host"])
+        throw new Error('Database credentials must contain a "host" value');
+      if (!("port" in secret) || !secret["port"])
+        throw new Error('Database credentials must contain a "port" value');
+      if (!("database_name" in secret) || !secret["database_name"])
+        throw new Error(
+          'Database credentials must contain a "database_name" value'
+        );
+      if (!("username" in secret) || !secret["username"])
+        throw new Error('Database credentials must contain a "username" value');
+      if (!("password" in secret) || !secret["password"])
+        throw new Error('Database credentials must contain a "password" value');
+      if (!("certificate" in secret) || !secret["certificate"])
+        throw new Error(
+          'Database credentials must contain a "certificate" value'
+        );
+
+      const pgClient = new Client({
+        host: getDatabaseCredential("host", secret),
+        port: parseInt(getDatabaseCredential("port", secret)),
+        database: getDatabaseCredential("database_name", secret),
+        user: getDatabaseCredential("username", secret),
+        password: getDatabaseCredential("password", secret),
+        ssl: {
+          rejectUnauthorized: false,
+          ca: getDatabaseCredential("certificate", secret),
+        },
+      });
+      try {
+        await pgClient.connect();
+        this.#connection = pgClient;
+        this.#createdConnection = true;
+        console.info("Succesfully connected to database");
+      } catch (err) {
+        console.error(`Error connecting to database: ${err.message}`);
+      }
     }
   }
 
