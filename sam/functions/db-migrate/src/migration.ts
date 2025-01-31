@@ -122,28 +122,16 @@ export default class Migration {
       // @ts-ignore
       // A bit of a hack to match the method name of our own db connection class
       dbConn.query = dbConn.runSql;
-      try {
-        console.log(
-          "Database: Attempting to load database module in DbMigrate"
-        );
-        // The module name is defined separately from the import to avoid tsc compilation errors
-        const module_name = "database-connector";
-        const module = await import(module_name);
-        let db = module.default;
-        db.transactionType = module.ExternalTransaction;
-        db.connection = dbConn;
-        this.#db = db;
+      console.log("Database: Attempting to load database module in DbMigrate");
+      // The module name is defined separately from the import to avoid tsc compilation errors
+      const module_name = "database-connector";
+      const module = await import(module_name);
+      let db = module.default;
+      db.transactionType = module.ExternalTransaction;
+      db.connection = dbConn;
+      this.#db = db;
 
-        this.#testsConfigured = true;
-      } catch (ex: unknown) {
-        if (ex instanceof Error) {
-          console.log(
-            `Database: Unable to load database module: ${ex.message}`
-          );
-        } else {
-          console.log("Database: Unable to load database module");
-        }
-      }
+      this.#testsConfigured = true;
     }
   }
 
@@ -156,9 +144,12 @@ export default class Migration {
   }
 
   private static async runMigration(db: any, fullFileName: string) {
+    console.log("Starting to run migration: " + fullFileName);
     const data = await this.readFile(fullFileName);
     //const val = await db.runSql(data);
-    return await db.runSql(data);
+    const result = await db.runSql(data);
+    console.log("Finished running migration");
+    return result;
   }
 
   private static async readFile(fullFileName: string) {
