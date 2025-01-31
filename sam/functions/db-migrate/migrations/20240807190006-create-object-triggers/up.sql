@@ -49,6 +49,7 @@ AS $function$
 DECLARE
     obj_prefix text;
     org_key    text;
+    uid_seq    bigint;
     uid_next   bigint;
     uid_incr   bigint;
     uid_max    bigint;
@@ -61,9 +62,9 @@ BEGIN
         THEN RAISE EXCEPTION 'Did not find object/organization corresponding to %.%', tbl_schema, tbl_name;
     END IF;
 
-    SELECT next, increment, max INTO uid_next, uid_incr, uid_max FROM object_sequences
+    SELECT sequence_number, next, increment, max INTO uid_seq, uid_next, uid_incr, uid_max FROM object_sequences
         WHERE organization_key=org_key AND object_prefix=obj_prefix FOR UPDATE;
-    UPDATE object_sequences _new SET next=MOD(uid_next + uid_incr, uid_max)
+    UPDATE object_sequences _new SET sequence_number=(uid_seq + 1), next=MOD(uid_next + uid_incr, uid_max)
         WHERE organization_key=org_key AND object_prefix=obj_prefix;
     return CONCAT(obj_prefix,
                   base36_encode(const_id_api_version(), const_id_api_version_len()),
@@ -95,21 +96,23 @@ AS $function$
 DECLARE
     org_key     text;
     org_schema  text;
-    next_prefix bigint;
+    prfx_seq     bigint;
+    prfx_next    bigint;
+    prfx_incr    bigint;
 BEGIN
     -- First auto-populate the object prefix (if not set)
     IF NEW.prefix IS NULL OR NEW.prefix='' THEN
         SELECT id_key INTO org_key FROM organizations WHERE id=NEW.organization_id;
-        UPDATE object_sequences _new SET next=(MOD(_new.next + _new.increment, _new.max))
-            FROM object_sequences _old
-            WHERE _old.organization_key=org_key AND _old.object_prefix IS NULL
-                AND _new.organization_key=org_key AND _new.object_prefix IS NULL
-            RETURNING _old.next INTO next_prefix;
-        IF next_prefix IS NULL THEN
+        SELECT sequence_number, next, increment INTO prfx_seq, prfx_next, prfx_incr FROM object_sequences
+            WHERE organization_key=org_key AND object_prefix IS NULL
+            FOR UPDATE;
+        IF prfx_seq IS NULL THEN
             RAISE EXCEPTION 'Did not find object prefix sequence for org with id=%', NEW.organization_id;
         END IF;
+        UPDATE object_sequences SET sequence_number=(prfx_seq + 1), next=(prfx_next + prfx_incr)
+            WHERE organization_key=org_key AND object_prefix IS NULL;
 
-        NEW.prefix := base36_encode(next_prefix, const_id_obj_prefix_len());
+        NEW.prefix := base36_encode(prfx_next, const_id_obj_prefix_len());
     END IF;
 
     -- Copy the table schema name from the organization if it has not been set
