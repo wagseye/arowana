@@ -27,19 +27,19 @@ export default class TestMigration {
   }
   static async testUidLength() {
     let res = await this.querySingleValue("SELECT const_id_uid_len()");
-    Test.assertEquals(7, parseInt(res));
+    Test.assertEquals(8, parseInt(res));
   }
   static async testUidIncrement() {
     let res = await this.querySingleValue("SELECT const_uid_increment()");
-    Test.assertEquals(2222222033, parseInt(res));
+    Test.assertEquals(222222222007, parseInt(res));
   }
   static async testUidMax() {
     let res = await this.querySingleValue("SELECT const_uid_max()");
-    Test.assertEquals(78364164096, parseInt(res));
+    Test.assertEquals(2821109907437, parseInt(res));
   }
 
   static async querySingleValue(q) {
-    const res = await Database.runSql(q);
+    const res = await Database.runQuery(q);
     if (res && res.length) {
       if (res.length > 1) {
         throw new Error(
