@@ -54,8 +54,6 @@ BEGIN
   --This will automatically create the object_sequence for generating ids as well as setup the trigger to autogenerate the ids
   INSERT INTO objects (organization_id, name, label, label_plural, table_schema, table_name, is_admin, prefix, created_by)
       VALUES (org_id, 'object_field', 'object_field', 'object_fields', 'public', 'object_fields', true, obj_fld_prefix, user_id);
-  org_id := generate_new_record_id('public', 'organizations');
-  UPDATE organizations SET id=org_id WHERE id=temp_org_id;
   CREATE OR REPLACE TRIGGER populate_public_object_fields_id
     BEFORE INSERT ON object_fields FOR EACH ROW
     EXECUTE FUNCTION populate_new_record_id();
