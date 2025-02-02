@@ -63,8 +63,9 @@ BEGIN
     END IF;
 
     SELECT sequence_number, next, increment, max INTO uid_seq, uid_next, uid_incr, uid_max FROM object_sequences
-        WHERE organization_key=org_key AND object_prefix=obj_prefix FOR UPDATE;
-    UPDATE object_sequences _new SET sequence_number=(uid_seq + 1), next=MOD(uid_next + uid_incr, uid_max)
+        WHERE organization_key=org_key AND object_prefix=obj_prefix
+        FOR UPDATE;
+    UPDATE object_sequences SET sequence_number=(uid_seq + 1), next=MOD(uid_next + uid_incr, uid_max)
         WHERE organization_key=org_key AND object_prefix=obj_prefix;
     return CONCAT(obj_prefix,
                   base36_encode(const_id_api_version(), const_id_api_version_len()),
@@ -100,17 +101,23 @@ DECLARE
     prfx_next    bigint;
     prfx_incr    bigint;
 BEGIN
-    -- First auto-populate the object prefix (if not set)
-    IF NEW.prefix IS NULL OR NEW.prefix='' THEN
+
+    -- First copy the organization key if it is not set
+    IF NEW.organization_key IS NULL OR NEW.organization_key='' THEN
         SELECT id_key INTO org_key FROM organizations WHERE id=NEW.organization_id;
+        NEW.organization_key = org_key;
+    END IF;
+
+    -- Auto-populate the object prefix (if not set)
+    IF NEW.prefix IS NULL OR NEW.prefix='' THEN
         SELECT sequence_number, next, increment INTO prfx_seq, prfx_next, prfx_incr FROM object_sequences
-            WHERE organization_key=org_key AND object_prefix IS NULL
+            WHERE organization_key=NEW.organization_key AND object_prefix IS NULL
             FOR UPDATE;
         IF prfx_seq IS NULL THEN
             RAISE EXCEPTION 'Did not find object prefix sequence for org with id=%', NEW.organization_id;
         END IF;
         UPDATE object_sequences SET sequence_number=(prfx_seq + 1), next=(prfx_next + prfx_incr)
-            WHERE organization_key=org_key AND object_prefix IS NULL;
+            WHERE organization_key=NEW.organization_key AND object_prefix IS NULL;
 
         NEW.prefix := base36_encode(prfx_next, const_id_obj_prefix_len());
     END IF;
