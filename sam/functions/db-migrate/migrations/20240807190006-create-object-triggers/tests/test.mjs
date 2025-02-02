@@ -2,6 +2,27 @@ import Database from "database-connector";
 import { Test } from "testing";
 
 export default class TestObjectSequenceTriggers {
+  static async testPopulateObjectFields() {
+    let res = await Database.runQuery(
+      `INSERT INTO organizations (id, name, id_key, table_schema) VALUES
+      ('org1', 'org1', 'zzzz', '0001') RETURNING id, id_key`
+    );
+    Test.assertEquals(1, res.length);
+    let org_id = res[0].id;
+    let org_key = res[0].id_key;
+
+    res =
+      await Database.runQuery(`INSERT INTO objects (id, organization_id, name, label, label_plural) VALUES
+      ('id1', '${org_id}', 'new_object', 'new_object', 'new_objects')`);
+
+    res = await Database.runQuery(`SELECT * FROM objects WHERE id='id1'`);
+    Test.assertEquals(1, res.length);
+    Test.assertEquals("zzzz", res[0].organization_key);
+    Test.assertEquals("a00", res[0].prefix);
+    Test.assertEquals("0001", res[0].table_schema);
+    Test.assertEquals("new_objects", res[0].table_name);
+  }
+
   static async testObjSequenceForNewOrgs() {
     let res = await Database.runQuery(
       `SELECT count(*) as count FROM object_sequences`

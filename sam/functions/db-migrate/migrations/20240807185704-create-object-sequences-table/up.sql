@@ -11,8 +11,7 @@ CREATE TABLE object_sequences(
   max               bigint NOT NULL,
   UNIQUE NULLS NOT DISTINCT (organization_key, object_prefix)
 );
-ALTER TABLE object_sequences ADD CONSTRAINT fk_organizations_id_key FOREIGN KEY (organization_key) REFERENCES organizations(id_key) ON UPDATE CASCADE;
-ALTER TABLE object_sequences ADD CONSTRAINT fk_objects_organization_key_object_prefix FOREIGN KEY (organization_key, object_prefix) REFERENCES objects(organization_key, object_prefix) ON UPDATE CASCADE;
+ALTER TABLE object_sequences ADD CONSTRAINT fk_objects_organization_key_object_prefix FOREIGN KEY (organization_key, object_prefix) REFERENCES objects(organization_key, prefix) ON UPDATE CASCADE;
 
 --We insert a special record into obj_seq to keep track the org_key sequence. This is identified by having both
 --organization_key and object_prefix set to NULL.  We set next=1000 to reserve 1-999 for admin orgs.

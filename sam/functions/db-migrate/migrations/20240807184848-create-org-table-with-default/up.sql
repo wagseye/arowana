@@ -5,7 +5,7 @@ CREATE TABLE organizations (
   table_schema  text UNIQUE NULLS NOT DISTINCT,
   created_at    timestamp with time zone NOT NULL DEFAULT now(),
   deleted_at    timestamp with time zone,
-  UNIQUE NULLS NOT DISTINCT (id, table_schema)
+  UNIQUE NULLS NOT DISTINCT (id, id_key, table_schema)
 );
 -- Create the admin organization
 INSERT INTO organizations (id, name, id_key, table_schema)

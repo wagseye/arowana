@@ -1,6 +1,7 @@
 CREATE TABLE objects (
   id               text PRIMARY KEY,
   organization_id  text NOT NULL,
+  organization_key text NOT NULL,
   name             text NOT NULL,
   label            text NOT NULL,
   label_plural     text NOT NULL,
@@ -14,14 +15,14 @@ CREATE TABLE objects (
   last_modified_by text,
   last_modified_at timestamp with time zone,
   deleted_at       timestamp with time zone,
-  UNIQUE (organization_id, prefix),
+  UNIQUE (organization_key, prefix),
   -- Don't allow more than one undeleted record for each unique (table_schema, table_name)
   EXCLUDE USING btree (
     table_schema WITH =,
     table_name WITH =
   ) WHERE (deleted_at IS NULL)
 );
-ALTER TABLE objects ADD CONSTRAINT fk_organization FOREIGN KEY (organization_id, table_schema) REFERENCES organizations(id, table_schema) ON UPDATE CASCADE;
+ALTER TABLE objects ADD CONSTRAINT fk_organization FOREIGN KEY (organization_id, organization_key, table_schema) REFERENCES organizations(id, id_key, table_schema) ON UPDATE CASCADE;
 ALTER TABLE objects ADD CONSTRAINT fk_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON UPDATE CASCADE;
 ALTER TABLE objects ADD CONSTRAINT fk_last_modified_by FOREIGN KEY (last_modified_by) REFERENCES users(id) ON UPDATE CASCADE;
 
