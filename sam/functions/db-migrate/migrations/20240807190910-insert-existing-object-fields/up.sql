@@ -1,3 +1,33 @@
+CREATE OR REPLACE FUNCTION pg_temp.get_field_type_from_sql_type(field_name text, sql_type text)
+  RETURNS text
+  LANGUAGE plpgsql
+AS $function$
+BEGIN
+  CASE LOWER(sql_type)
+  WHEN 'text' THEN
+    IF field_name = 'id' THEN
+      RETURN 'id';
+    ELSEIF RIGHT(field_name, 3) = '_id' THEN
+      RETURN 'reference';
+    END IF;
+    RETURN 'text';
+  WHEN 'boolean' THEN
+    RETURN 'boolean';
+  WHEN 'timestamp with time zone' THEN
+    RETURN 'datetime';
+  -- The custom enum types show up as "USER-DEFINED"
+  WHEN 'sql_type' THEN
+    RETURN 'text';
+  WHEN 'field_type' THEN
+    RETURN 'text';
+  WHEN 'json' THEN
+    RETURN 'json';
+  ELSE
+    RAISE EXCEPTION 'Unrecognized type: %', sql_type;
+  END CASE;
+END;
+$function$;
+
 CREATE OR REPLACE FUNCTION pg_temp.populate_object_fields_from_table(tbl_schema name, tbl_name name)
   RETURNS void
   LANGUAGE plpgsql
@@ -8,7 +38,9 @@ BEGIN
   SELECT id INTO obj_id FROM objects WHERE table_schema=tbl_schema AND table_name=tbl_name;
    RAISE NOTICE 'table_name=%, obj_id=%', tbl_name, obj_id;
 
-  INSERT INTO object_fields(object_id, name, label, type, not_null, default_value) SELECT obj_id, column_name, column_name, data_type, (is_nullable!='YES')::boolean, column_default from INFORMATION_SCHEMA.COLUMNS where table_name=tbl_name;
+  INSERT INTO object_fields(object_id, name, label, type, sql_type, not_null, default_value)
+    SELECT obj_id, column_name, column_name, pg_temp.get_field_type_from_sql_type(column_name, data_type), data_type, (is_nullable!='YES')::boolean, column_default
+    FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name=tbl_name;
 END;
 $function$;
 

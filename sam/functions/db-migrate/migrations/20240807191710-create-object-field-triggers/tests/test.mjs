@@ -38,14 +38,17 @@ export default class TestCreateObjectFieldTriggers {
 
     // Make sure object_fields records were created for ids for the new tables
     res = await Database.runQuery(
-      `SELECT name, type, not_null FROM object_fields WHERE object_id IN ('${objIds[0]}', '${objIds[1]}')`
+      `SELECT name, type, sql_type, not_null FROM object_fields WHERE object_id IN ('${objIds[0]}', '${objIds[1]}')`
     );
     Test.assertEquals(2, res.length);
     Test.assertEquals("id", res[0].name);
-    Test.assertEquals("text", res[0].type);
+    Test.assertEquals("id", res[0].type);
+    Test.assertEquals("text", res[0].sql_type);
     Test.assertEquals(true, res[0].not_null);
+
     Test.assertEquals("id", res[1].name);
-    Test.assertEquals("text", res[1].type);
+    Test.assertEquals("id", res[1].type);
+    Test.assertEquals("text", res[1].sql_type);
     Test.assertEquals(true, res[1].not_null);
 
     // Make sure id columns were generated on the new tables
@@ -56,6 +59,7 @@ export default class TestCreateObjectFieldTriggers {
     Test.assertEquals("object1", res[0].table_name);
     Test.assertEquals("id", res[0].column_name);
     Test.assertEquals("text", res[0].data_type);
+
     Test.assertEquals("object2", res[1].table_name);
     Test.assertEquals("id", res[1].column_name);
     Test.assertEquals("text", res[1].data_type);
@@ -112,8 +116,8 @@ export default class TestCreateObjectFieldTriggers {
     Test.assertEquals("id", res[0].column_name);
 
     await Database.runQuery(
-      `INSERT INTO object_fields (object_id, name, label, type) VALUES
-      ('${OBJ_ID}', 'num', '-', 'integer')`
+      `INSERT INTO object_fields (object_id, name, label, type, sql_type) VALUES
+      ('${OBJ_ID}', 'num', '-', 'integer', 'numeric')`
     );
 
     // Check that the column now exists on our test table
@@ -122,7 +126,7 @@ export default class TestCreateObjectFieldTriggers {
     );
     Test.assertEquals(1, res.length);
     Test.assertEquals("num", res[0].column_name);
-    Test.assertEquals("integer", res[0].data_type);
+    Test.assertEquals("numeric", res[0].data_type);
   }
 
   static async testCreateReferenceColumnFromObjectFieldRecord() {
@@ -148,8 +152,8 @@ export default class TestCreateObjectFieldTriggers {
     const OBJ_B_FLD_ID = res[0].id;
 
     await Database.runQuery(
-      `INSERT INTO object_fields (object_id, name, label, type, reference_object_id, reference_field_id) VALUES
-      ('${OBJ_A_ID}', 'ref_to_b', '-', 'reference', '${OBJ_B_ID}', '${OBJ_B_FLD_ID}')`
+      `INSERT INTO object_fields (object_id, name, label, type, sql_type, reference_object_id, reference_field_id) VALUES
+      ('${OBJ_A_ID}', 'ref_to_b', '-', 'reference', 'text', '${OBJ_B_ID}', '${OBJ_B_FLD_ID}')`
     );
 
     // Ensure the reference field was created on object A
@@ -358,8 +362,8 @@ export default class TestCreateObjectFieldTriggers {
     Test.assertEquals("id", fld.name);
 
     await Database.runQuery(
-      `INSERT INTO object_fields (object_id, name, label, type) VALUES
-      ('${obj.id}', 'new_field', '-', 'text')`
+      `INSERT INTO object_fields (object_id, name, label, type, sql_type) VALUES
+      ('${obj.id}', 'new_field', '-', 'text', 'text')`
     );
 
     // Note that the table_name is in lower case here. This is required because that is how it is stored in Postgres

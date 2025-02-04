@@ -5,8 +5,8 @@ AS $function$
 DECLARE
 BEGIN
     EXECUTE format('CREATE TABLE IF NOT EXISTS %s.%s()', NEW.table_schema, NEW.table_name);
-    INSERT INTO object_fields (object_id, name, label, type, not_null)
-        VALUES (NEW.id, 'id', 'id', 'text', true);
+    INSERT INTO object_fields (object_id, name, label, type, sql_type, not_null)
+        VALUES (NEW.id, 'id', 'id', 'id', 'text', true);
     EXECUTE format('CREATE OR REPLACE TRIGGER populate_%s_%s_id BEFORE INSERT ON %s.%s FOR EACH ROW EXECUTE FUNCTION populate_new_record_id()',
         NEW.table_schema, NEW.table_name, NEW.table_schema, NEW.table_name);
     RETURN NEW;
@@ -52,9 +52,9 @@ BEGIN
           tbl_schema, tbl_name, ref_tbl_name, NEW.name, ref_tbl_schema, ref_tbl_name, ref_field_name);
     ELSE
         IF new.name = 'id' THEN
-            EXECUTE format('ALTER TABLE %s.%s ADD COLUMN %s %s PRIMARY KEY', tbl_schema, tbl_name, NEW.name, NEW.type);
+            EXECUTE format('ALTER TABLE %s.%s ADD COLUMN %s %s PRIMARY KEY', tbl_schema, tbl_name, NEW.name, NEW.sql_type);
         ELSE
-            EXECUTE format('ALTER TABLE %s.%s ADD COLUMN %s %s', tbl_schema, tbl_name, NEW.name, NEW.type);
+            EXECUTE format('ALTER TABLE %s.%s ADD COLUMN %s %s', tbl_schema, tbl_name, NEW.name, NEW.sql_type);
         END IF;
     END IF;
     RAISE NOTICE 'table_name=(%.%)', tbl_schema, tbl_name;

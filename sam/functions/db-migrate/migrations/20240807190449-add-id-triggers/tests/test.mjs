@@ -77,8 +77,8 @@ export default class TestAddIdTriggers {
     );
 
     res = await Database.runQuery(
-      `INSERT INTO object_fields (object_id, name, label, type) VALUES
-      ('${obj_id}', 'num', '-', 'integer')`
+      `INSERT INTO object_fields (object_id, name, label, type, sql_type) VALUES
+      ('${obj_id}', 'num', '-', 'integer', 'numeric')`
     );
     res = await Database.runQuery(
       `SELECT id FROM object_fields WHERE object_id='${obj_id}' AND name='num'`
