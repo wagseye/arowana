@@ -26,9 +26,12 @@ AS $function$
 DECLARE
     tbl_schema       text;
     tbl_name         text;
-    ref_tbl_name   text;
-    ref_tbl_schema text;
+    ref_tbl_name     text;
+    ref_tbl_schema   text;
     ref_field_name   text;
+
+    sql_primary_key  text;
+    sql_default      text;
 BEGIN
     SELECT table_schema, table_name INTO tbl_schema, tbl_name FROM objects WHERE id=NEW.object_id;
 
@@ -51,11 +54,19 @@ BEGIN
         EXECUTE format('ALTER TABLE %s.%s ADD CONSTRAINT fk_%s FOREIGN KEY (%s) REFERENCES %s.%s(%s)',
           tbl_schema, tbl_name, ref_tbl_name, NEW.name, ref_tbl_schema, ref_tbl_name, ref_field_name);
     ELSE
-        IF new.name = 'id' THEN
-            EXECUTE format('ALTER TABLE %s.%s ADD COLUMN %s %s PRIMARY KEY', tbl_schema, tbl_name, NEW.name, NEW.sql_type);
-        ELSE
-            EXECUTE format('ALTER TABLE %s.%s ADD COLUMN %s %s', tbl_schema, tbl_name, NEW.name, NEW.sql_type);
+        sql_primary_key = '';
+        IF NEW.name = 'id' THEN
+            sql_primary_key=' PRIMARY KEY';
         END IF;
+        sql_default = '';
+        IF NEW.default_value IS NOT NULL AND NEW.default_value!='' THEN
+            IF NEW.default_type = 'text' THEN
+                sql_default = format(' DEFAULT ''%''', NEW.default_value);
+            ELSE
+                sql_default = format(' DEFAULT %', NEW.default_value);
+            END IF;
+        END IF;
+        EXECUTE format('ALTER TABLE %s.%s ADD COLUMN %s %s%s%s', tbl_schema, tbl_name, NEW.name, NEW.sql_type, sql_primary_key, sql_default);
     END IF;
     RAISE NOTICE 'table_name=(%.%)', tbl_schema, tbl_name;
 

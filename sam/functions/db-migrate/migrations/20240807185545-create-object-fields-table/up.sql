@@ -10,7 +10,8 @@ CREATE TABLE object_fields (
   reference_field_id  text,
   description         text,
   not_null            boolean DEFAULT false,
-  default_value       text,
+  default_value       text CHECK ((default_value IS NULL) = (default_type IS NULL)), --both or neither must be set
+  default_type        text CHECK (default_type IS NULL OR default_type=sql_type OR default_type='formula'),
   options             json,
   created_by          text,
   created_at          timestamp with time zone NOT NULL DEFAULT now(),

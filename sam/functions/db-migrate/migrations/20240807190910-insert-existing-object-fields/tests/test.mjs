@@ -136,7 +136,7 @@ export default class TestInsertExistingObjectFields {
       INNER JOIN objects o ON of.object_id=o.id
       AND o.table_schema='public' AND o.table_name='object_fields'`
     );
-    Test.assertEquals(18, res.length);
+    Test.assertEquals(19, res.length);
     Test.assertEquals(res.length, res2.length);
 
     const fields = res2.reduce((map, val) => {
